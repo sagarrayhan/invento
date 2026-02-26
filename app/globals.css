@@ -1,5 +1,6 @@
 @import "tailwindcss";
 
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -19,8 +20,149 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ===============================
+   BASE LAYER
+=============================== */
+
+@layer base {
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+
+@layer components {
+
+  /* ===== Typography ===== */
+
+  .heading-xl {
+    @apply text-4xl font-bold text-slate-900 dark:text-white;
+  }
+
+  .heading-lg {
+    @apply text-2xl font-semibold text-slate-800 dark:text-slate-200;
+  }
+
+  .text-muted {
+    @apply text-slate-500 dark:text-slate-400;
+  }
+
+  /* ===== Card ===== */
+
+  .card {
+    @apply bg-white dark:bg-slate-900
+    rounded-2xl shadow-md
+    p-6 border border-slate-200 dark:border-slate-800;
+  }
+
+  /* ===== Buttons ===== */
+
+  .btn-primary {
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-200
+    bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer
+    focus:outline-none focus:ring-2 focus:ring-indigo-500;
+  }
+
+  .btn-secondary {
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-200
+    bg-slate-200 text-slate-800 hover:bg-slate-300;
+  }
+
+  .btn-success {
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-200
+    bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+
+  .btn-danger {
+    @apply px-5 py-2.5 rounded-xl font-medium transition-all duration-200
+    bg-rose-600 text-white hover:bg-rose-700;
+  }
+
+  /* ===== Input Fields ===== */
+
+  .input {
+    @apply w-full px-4 py-2 rounded-xl
+    border border-slate-300
+    focus:ring-2 focus:ring-indigo-500 focus:outline-none
+    dark:bg-slate-800 dark:border-slate-700 dark:text-white;
+  }
+
+  .textarea {
+    @apply w-full px-4 py-2 rounded-xl min-h-[120px]
+    border border-slate-300
+    focus:ring-2 focus:ring-indigo-500 focus:outline-none
+    dark:bg-slate-800 dark:border-slate-700 dark:text-white;
+  }
+
+  .label {
+    @apply block text-sm font-medium
+    text-slate-700 dark:text-slate-300 mb-1;
+  }
+
+  /* ===== Badges ===== */
+
+  .badge-success {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+    bg-emerald-100 text-emerald-700;
+  }
+
+  .badge-warning {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+    bg-amber-100 text-amber-700;
+  }
+
+  .badge-danger {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+    bg-rose-100 text-rose-700;
+  }
+
+  /* ===== Alert ===== */
+
+  .alert-success {
+    @apply p-4 rounded-xl border text-sm
+    bg-emerald-50 border-emerald-200 text-emerald-700;
+  }
+
+  .alert-danger {
+    @apply p-4 rounded-xl border text-sm
+    bg-rose-50 border-rose-200 text-rose-700;
+  }
+
+  /* ===== Table ===== */
+
+  .table {
+    @apply w-full border-collapse;
+  }
+
+  .table th {
+    @apply text-left p-3 bg-slate-100 dark:bg-slate-800 text-sm font-semibold;
+  }
+
+  .table td {
+    @apply p-3 border-t border-slate-200 dark:border-slate-700;
+  }
+
+  .table-row-hover {
+    @apply hover:bg-slate-50 dark:hover:bg-slate-800 transition;
+  }
+
+  /* ===== Modal ===== */
+
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/40 backdrop-blur-sm
+    flex items-center justify-center;
+  }
+
+  .modal {
+    @apply bg-white dark:bg-slate-900
+    rounded-2xl shadow-xl p-6 w-full max-w-lg;
+  }
+
+  /* ===== Loader ===== */
+
+  .spinner {
+    @apply w-6 h-6 border-4 border-slate-300
+    border-t-indigo-600 rounded-full animate-spin;
+  }
+
 }
