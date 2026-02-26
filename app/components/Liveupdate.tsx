@@ -1,116 +1,134 @@
 import React, { useEffect, useState } from 'react'
+import { Activity, Boxes } from 'lucide-react'
 import Photo from './Photo'
 import { getLiveData } from '../data/tiles'
 import { Tile, User } from '../data/types'
 import { getLiveUsers } from '../data/user'
 
 export default function Liveupdate() {
-    const [live, getLive] = useState<Tile[]>()
-    const [users, setUsers] = useState<User[]>()
-    const [selected, setSelected] = useState<string | null>(null)
-    const [active, setActive] = useState('')
-    useEffect(() => {
-        const unSubUsers = getLiveUsers(users => setUsers(users))
-        if(!active) return
-        const unsubs = getLiveData(active, (tiles) => { getLive(tiles) })
+  const [live, setLive] = useState<Tile[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const [activeUserId, setActiveUserId] = useState('')
 
+  useEffect(() => {
+    const unSubUsers = getLiveUsers(setUsers)
+    return () => unSubUsers()
+  }, [])
 
-        return () => {
-            unSubUsers
-            unsubs
-        }
-    }, [active])
-    return (
-        <div className='p-4 w-full'>
-            <div className=' flex items-baseline-last gap-2'>
-                <h1 className='heading-lg mb-4'>Live Update </h1>
-                <div className=' bg-green-900 size-4 rounded-full animate-ping' />
-            </div>
-            {/* active Users */}
-            <div className='flex gap-3 my-3'>
-                {
-                    users?.map(user => (
-                        <div key={user.id} onClick={()=>setActive(user.id)} className={`${user.id == active? "bg-blue-200" : "bg-blue-50"} flex items-center gap-2  justify-center  p-2 rounded-l-full cursor-pointer`}>
-                            <Photo url={user.imageUrl} size={60} />
-                            <div>
-                                <p className=' font-semibold'>{user.name}</p>
-                                <p className=' text-sm'>{user.id}</p>
-                            </div>
+  useEffect(() => {
+    if (!activeUserId) {
+      return
+    }
+
+    const unSubLive = getLiveData(activeUserId, setLive)
+    return () => unSubLive()
+  }, [activeUserId])
+
+  return (
+    <div className='w-full p-4 md:p-6 space-y-5'>
+      <header className='surface p-5 flex items-center justify-between'>
+        <div>
+          <h1 className='text-xl font-semibold text-slate-900'>Live Update</h1>
+          <p className='text-sm text-slate-500'>Monitor user movement and active tile changes in realtime.</p>
+        </div>
+        <div className='inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1.5 text-xs font-medium'>
+          <Activity size={14} className='animate-pulse' />
+          Live
+        </div>
+      </header>
+
+      <section className='surface p-4'>
+        <h2 className='text-sm font-semibold text-slate-700 mb-3'>Active Users</h2>
+        <div className='flex flex-wrap gap-2.5'>
+          {users.length === 0 ? (
+            <p className='text-sm text-slate-500'>No users currently active.</p>
+          ) : (
+            users.map((user) => (
+              <button
+                key={user.id}
+                type='button'
+                onClick={() => {
+                  setActiveUserId(user.id)
+                  setSelectedCode(null)
+                }}
+                className={`px-3 py-2 rounded-2xl border transition flex items-center gap-2 ${
+                  user.id === activeUserId
+                    ? 'bg-slate-700 text-white border-slate-700'
+                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                <Photo url={user.imageUrl} size={38} />
+                <div className='text-left'>
+                  <p className='text-sm font-medium leading-none'>{user.name}</p>
+                  <p className={`text-xs mt-1 ${user.id === activeUserId ? 'text-slate-300' : 'text-slate-500'}`}>{user.id}</p>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </section>
+
+      <section className='surface p-4'>
+        <div className='flex items-center gap-2 mb-3 text-slate-800'>
+          <Boxes size={16} />
+          <h2 className='text-sm font-semibold'>Live Tile Stream</h2>
+        </div>
+
+        {!activeUserId ? (
+          <p className='text-sm text-slate-500'>Select a user to view live updates.</p>
+        ) : live.length === 0 ? (
+          <p className='text-sm text-slate-500'>No active tiles for this user.</p>
+        ) : (
+          <div className='space-y-2'>
+            <HeaderRow />
+            {live.map((item) => {
+              const expanded = selectedCode === item.code
+              return (
+                <div key={item.id} className='rounded-xl border border-slate-200 bg-white overflow-hidden'>
+                  <button
+                    type='button'
+                    onClick={() => setSelectedCode(expanded ? null : item.code)}
+                    className='w-full px-3 py-2 text-left hover:bg-slate-50'
+                  >
+                    <LiveItem code={item.code} history='-' qty={String(item.quantity)} />
+                  </button>
+                  {expanded ? (
+                    <div className='border-t border-slate-100 bg-slate-50 px-3 py-2 space-y-1.5'>
+                      <HeaderRow muted />
+                      {item.items?.map((g) => (
+                        <div key={g.grid} className='rounded-lg border border-slate-200 bg-white px-2.5 py-1.5'>
+                          <LiveItem code={g.grid} history={g.history} qty={g.quantity} />
                         </div>
-                    ))
-                }
-            </div>
-            {
-    active && (
-        <div className='bg-blue-300 px-2 py-1 rounded-lg'>
-            <div className='px-2 bg-blue-300 py-2'>
-                <LiveItem code='Code' history='' qty='Qty' />
-            </div>
-
-            {
-                !live || live.length === 0 ? (
-                    <div className="text-center py-4 text-gray-700 font-semibold">
-                        No one online
+                      ))}
                     </div>
-                ) : (
-                    live.map(item => (
-                        <div
-                            key={item.id}
-                            onClick={() =>
-                                setSelected(selected === item.code ? null : item.code)
-                            }
-                            className='bg-blue-200 mb-1 px-2 py-1 rounded-sm cursor-pointer transition-all duration-300'
-                        >
-                            <div className='mb-1'>
-                                <LiveItem
-                                    code={item.code}
-                                    history=''
-                                    qty={item.quantity}
-                                />
-                            </div>
-
-                            {item.code === selected && (
-                                <div className='bg-blue-100 rounded-sm p-1'>
-                                    <div className='flex justify-between text-sm font-semibold mb-1'>
-                                        <p>Grid</p>
-                                        <p>History</p>
-                                        <p>Qty</p>
-                                    </div>
-
-                                    {item.items?.map(g => (
-                                        <div
-                                            key={g.grid}
-                                            className='text-sm border rounded-sm p-1 my-1'
-                                        >
-                                            <LiveItem
-                                                code={g.grid}
-                                                history={g.history}
-                                                qty={g.quantity}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))
-                )
-            }
-        </div>
-    )
+                  ) : null}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  )
 }
 
-
-
-        </div>
-    )
+function HeaderRow({ muted = false }: { muted?: boolean }) {
+  return (
+    <div className={`grid grid-cols-3 text-xs font-semibold px-3 ${muted ? 'text-slate-500' : 'text-slate-700'}`}>
+      <p>Code</p>
+      <p className='text-center'>History</p>
+      <p className='text-right'>Qty</p>
+    </div>
+  )
 }
 
-function LiveItem({ code, history, qty }: { code: string, history: string, qty: any }) {
-    return (
-        <div className='flex justify-between'>
-            <p>{code}</p>
-            <p>{history}</p>
-            <p>{qty}</p>
-        </div>
-    )
+function LiveItem({ code, history, qty }: { code: string; history: string; qty: string }) {
+  return (
+    <div className='grid grid-cols-3 text-sm text-slate-700'>
+      <p>{code}</p>
+      <p className='text-center truncate'>{history}</p>
+      <p className='text-right font-medium'>{qty}</p>
+    </div>
+  )
 }

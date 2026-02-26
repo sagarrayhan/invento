@@ -8,6 +8,14 @@ export interface User{
     joinedAt : string
 }
 
+export interface AuthUser {
+    id: string,
+    name: string,
+    designation: string,
+    imageUrl: string,
+    joinedAt: string
+}
+
 export interface Tile {
     id: string
     code: string

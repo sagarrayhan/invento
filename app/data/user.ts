@@ -1,7 +1,11 @@
-import { get, onValue, ref, set, update } from "firebase/database";
+import { get, onValue, ref, remove, set, update } from "firebase/database";
 import { User } from "./types";
 import { db } from "@/firebase/config";
 
+export async function setDbUser(user: User) {
+  const userRef = ref(db, `/inventory/users/${user.id}`)
+  await set(userRef, user)
+}
 
 export function getDbUser(id: string): Promise<User | null> {
     const userRef = ref(db, `/inventory/users/${id}`)
@@ -27,6 +31,10 @@ export function getLiveUsers(callback: (users: User[]) => void) {
 
         // Step 2: Get actual data object
         const data = snap.val()
+        if (!data || typeof data !== "object") {
+            callback([])
+            return
+        }
 
         // Step 3: Extract user IDs
         const keys = Object.keys(data)
@@ -53,10 +61,16 @@ export function getSubmittedUsers(callback : (users : string[])=>void){
     const submittedByRef = ref(db, '/inventory/submits/submittedBy')
 
     const unSubs = onValue(submittedByRef, snap=>{
-        if(!snap){
-            return []
+        if(!snap.exists()){
+            callback([])
+            return
         }
-        const users = Object.keys(snap.val())
+        const data = snap.val()
+        if(!data || typeof data !== "object"){
+            callback([])
+            return
+        }
+        const users = Object.keys(data)
         callback(users)
     })
 
@@ -91,6 +105,11 @@ export async function setImageUrl(imageUrl:string, uid: string){
     update(urlRef, {
         imageUrl : imageUrl
     })
+}
+
+export async function deleteDbUser(uid: string) {
+    const userRef = ref(db, `/inventory/users/${uid}`)
+    await remove(userRef)
 }
 
 
