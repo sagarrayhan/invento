@@ -52,13 +52,6 @@ export default function Page() {
     setSelected('Dashboard')
   }
 
-  if (checkingSession) {
-    return (
-      <div className='app-shell flex items-center justify-center'>
-        <div className='surface px-6 py-4 text-slate-600 text-sm'>Restoring session...</div>
-      </div>
-    )
-  }
 
   if (!currentUser) {
     return <Login onLogin={setCurrentUser} />
