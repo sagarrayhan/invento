@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { ArrowRight, KeyRound, UserRound } from 'lucide-react'
+import { ArrowRight, KeyRound, LoaderCircle, LoaderCircleIcon, UserRound } from 'lucide-react'
 import { AuthUser } from '../data/types'
 import { Logo } from './Logo'
 
@@ -83,7 +83,7 @@ export default function Login({ onLogin }: { onLogin: (user: AuthUser) => void }
             </div>
             <button disabled={loading} onClick={submit} className='btn-primary w-full'>
               {loading ? 'Signing in...' : 'Sign In'}
-              <ArrowRight size={15} />
+              {loading? <ArrowRight size={15}/> : <LoaderCircleIcon className=' animate-spin'/>}
             </button>
             <p className='text-sm text-rose-500 min-h-5'>{error}</p>
           </div>
