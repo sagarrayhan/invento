@@ -30,6 +30,10 @@ export default function Page() {
 
     restoreSession()
   }, [])
+  
+  if (checkingSession) {
+    return null
+  }
 
   const renderContent = () => {
     if (!currentUser) return null
@@ -39,7 +43,7 @@ export default function Page() {
       case 'Submits':
         return <Submits />
       case 'Users':
-        return <Users currentUserId={currentUser.id} />
+        return <Users currentUser={currentUser} />
       case 'Dashboard':
       default:
         return <Dashboard />

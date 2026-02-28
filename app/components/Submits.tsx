@@ -3,46 +3,39 @@ import { Download, HardDriveDownload, Send, Trash2 } from 'lucide-react'
 import { getAllSubmittedData, getSubmittedData, removeFromSubmit } from '../data/tiles'
 import { SubmittedItems, Tile, User } from '../data/types'
 import Photo from './Photo'
-import { mergedTilesToExcel, tilesToExcel } from '@/lib/excel'
-import { getDbUser, getSubmittedUsers } from '../data/user'
+import { donwloadDetailed, downloadTotal, mergeAll, tilesToExcel } from '@/lib/excel'
+import { getAllUsers, getDbUser, getSubmittedUsers } from '../data/user'
 
 export default function Submits() {
   const [ids, setUsers] = useState<string[]>([])
-  const [allTiles, setAllTiles] = useState<Tile[]>([])
+  const [allTiles, setAllTiles] = useState<Tile[][]>([])
   const [loadingAll, setLoadingAll] = useState(false)
 
-  const refreshMergedTiles = useCallback(async (userIds: string[]) => {
-    if (userIds.length === 0) {
-      setAllTiles([])
-      return
-    }
-    setLoadingAll(true)
-    try {
-      const merged = await getAllSubmittedData(userIds)
-      setAllTiles(merged)
-    } finally {
-      setLoadingAll(false)
-    }
+  useEffect(() => {
+    const unsubs = getSubmittedUsers((u) => setUsers(u))
+    return unsubs
   }, [])
 
   useEffect(() => {
-    const unsubs = getSubmittedUsers((nextIds) => {
-      setUsers(nextIds)
-      if (nextIds.length === 0) {
-        setAllTiles([])
+    if (ids.length !== 0) {
+      async function getAll() {
+        const tiles = await getAllSubmittedData(ids)
+        setAllTiles(tiles)
       }
-    })
-    return () => unsubs()
-  }, [])
-
-  useEffect(() => {
-    if (ids.length === 0) {
-      return
+      getAll()
     }
-    refreshMergedTiles(ids)
-  }, [ids, refreshMergedTiles])
+  }, [ids])
 
-  const totalQty = useMemo(() => allTiles.reduce((sum, t) => sum + Number(t.quantity || 0), 0), [allTiles])
+
+
+
+  const totalQty = useMemo(() => {
+    const flatTiles = allTiles.flat()
+    return flatTiles.reduce(
+      (sum, t) => sum + Number(t.quantity || 0),
+      0
+    )
+  }, [allTiles])
 
   return (
     <div className='w-full p-4 md:p-6 space-y-5'>
@@ -58,18 +51,27 @@ export default function Submits() {
         </div>
         <div className='flex items-center gap-3'>
           <div className='text-sm text-slate-600'>
-            <span className='font-semibold text-slate-800'>{allTiles.length}</span> merged tiles,{' '}
             <span className='font-semibold text-slate-800'>{totalQty}</span> total quantity
           </div>
           <button
             type='button'
+            onClick={() => { donwloadDetailed(ids) }}
             className='btn-secondary'
             disabled={loadingAll || allTiles.length === 0}
-            onClick={() => mergedTilesToExcel(allTiles)}
             title='Download all merged submits'
           >
             <Download size={14} />
-            {loadingAll ? 'Preparing...' : 'Download All'}
+            {loadingAll ? 'Preparing...' : 'Download (details)'}
+          </button>
+          <button
+            type='button'
+            onClick={() => { downloadTotal(ids) }}
+            className='btn-secondary'
+            disabled={loadingAll || allTiles.length === 0}
+            title='Download all merged submits'
+          >
+            <Download size={14} />
+            {loadingAll ? 'Preparing...' : 'Download'}
           </button>
         </div>
       </section>

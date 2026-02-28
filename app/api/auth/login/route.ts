@@ -2,10 +2,14 @@ import { NextRequest, NextResponse } from 'next/server'
 import { AuthUser, User } from '@/app/data/types'
 import { AUTH_COOKIE_NAME, signAuthToken } from '@/lib/auth'
 
-const DATABASE_URL = process.env.FIREBASE_DATABASE_URL || 'https://inventory-170b9-default-rtdb.firebaseio.com'
+const DATABASE_URL = process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL
 
 export async function POST(req: NextRequest) {
   try {
+    if (!DATABASE_URL) {
+      return NextResponse.json({ error: 'Database URL is not configured.' }, { status: 500 })
+    }
+
     const body = await req.json()
     const id = String(body?.id || '').trim()
     const password = String(body?.password || '')

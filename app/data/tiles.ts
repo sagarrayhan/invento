@@ -1,6 +1,7 @@
 import { db } from "@/firebase/config";
 import { get, onValue, ref, remove } from "firebase/database";
 import { Item, SubmittedItems, Tile } from "./types";
+import { log } from "console";
 
 export function getLiveData(id: string, onData: (tiles: Tile[]) => void) {
     const liveRef = ref(db, `/inventory/liveUpdates/${id}`)
@@ -19,25 +20,21 @@ export function getLiveData(id: string, onData: (tiles: Tile[]) => void) {
 
 export function getSubmittedData(id: string, callback: (i: SubmittedItems[]) => void) {
     const submitRef = ref(db, `/inventory/submits/${id}`)
-    const submittedByRef = ref(db, `/inventory/submits/submittedBy/${id}`)
 
-    const unsubs = onValue(submitRef, async (snap) => {
+    const unsubs = onValue(submitRef, (snap) => {
         if (!snap.exists()) {
             callback([])
-            await remove(submittedByRef)
             return
         }
 
         const data = snap.val()
         if (!data || typeof data !== "object") {
             callback([])
-            await remove(submittedByRef)
             return
         }
 
         if (Object.keys(data).length === 0) {
             callback([])
-            await remove(submittedByRef)
             return
         }
 
@@ -56,7 +53,22 @@ export function getSubmittedData(id: string, callback: (i: SubmittedItems[]) => 
 
 export function removeFromSubmit(uid: string, id: string) {
     const submitRef = ref(db, `/inventory/submits/${uid}/${id}`)
-    return remove(submitRef)
+    const userSubmitRef = ref(db, `/inventory/submits/${uid}`)
+    const submittedByRef = ref(db, `/inventory/submits/submittedBy/${uid}`)
+
+    return remove(submitRef).then(async () => {
+        const remaining = await get(userSubmitRef)
+
+        if (!remaining.exists()) {
+            await remove(submittedByRef)
+            return
+        }
+
+        const data = remaining.val()
+        if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
+            await remove(submittedByRef)
+        }
+    })
 }
 
 const toNumber = (value: number | string | undefined | null) => {
@@ -97,48 +109,25 @@ function mergeItems(baseItems: Item[], incomingItems: Item[]): Item[] {
     return Array.from(itemMap.values())
 }
 
-export async function getAllSubmittedData(users: string[]) {
-    const tileMap = new Map<string, Tile>()
+export async function getAllSubmittedData(users: string[]):Promise<Tile[][]> {
 
-    const promises = users.map(user => {
+    const allTiles : Tile[][] = []
+    
+    await Promise.all(users.map(user=>{
         const submitRef = ref(db, `/inventory/submits/${user}`)
 
-        return get(submitRef).then(snap => {
-            if (!snap.exists()) {
-                return
+        return get(submitRef).then(snap=>{
+            if(!snap.exists()){
+                return []
             }
 
-            const data = snap.val()
-            if (!data || typeof data !== "object") {
-                return
-            }
-
-            const lists = Object.values(data)
-
-            lists.forEach((list) => {
-                (list as Tile[]).forEach((tile) => {
-                    const normalizedTile: Tile = {
-                        ...tile,
-                        quantity: toNumber(tile.quantity),
-                        items: normalizeItems(tile.items),
-                    }
-
-                    const existing = tileMap.get(normalizedTile.code)
-                    if (!existing) {
-                        tileMap.set(normalizedTile.code, normalizedTile)
-                        return
-                    }
-
-                    tileMap.set(normalizedTile.code, {
-                        ...existing,
-                        quantity: toNumber(existing.quantity) + toNumber(normalizedTile.quantity),
-                        items: mergeItems(existing.items || [], normalizedTile.items || []),
-                    })
-                })
+            Object.entries(snap.val()).forEach(([k,v])=>{
+                const tiles = v as Tile[]    
+                allTiles.push(tiles)
             })
         })
-    })
+    }))
 
-    await Promise.all(promises)
-    return Array.from(tileMap.values())
+    return allTiles
+    
 }

@@ -1,63 +1,65 @@
-import crypto from 'crypto'
-import { AuthUser } from '@/app/data/types'
+import { createHmac, timingSafeEqual } from 'crypto'
+import type { AuthUser } from '@/app/data/types'
 
-type TokenPayload = {
-  sub: string
-  user: AuthUser
-  exp: number
-  iat: number
-}
-
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7
 export const AUTH_COOKIE_NAME = 'invento_auth'
 
+type AuthPayload = {
+  user: AuthUser
+  exp: number
+}
+
 function getSecret() {
-  return process.env.JWT_SECRET || 'dev-only-invento-jwt-secret-change-me'
+  const secret = process.env.AUTH_SECRET
+  if (secret) return secret
+  if (process.env.NODE_ENV !== 'production') return 'invento-dev-secret'
+  throw new Error('AUTH_SECRET is not configured.')
 }
 
-function base64UrlEncode(input: string) {
-  return Buffer.from(input).toString('base64url')
+function base64UrlEncode(value: string) {
+  return Buffer.from(value)
+    .toString('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '')
 }
 
-function base64UrlDecode(input: string) {
-  return Buffer.from(input, 'base64url').toString('utf8')
+function base64UrlDecode(value: string) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+  const padding = '='.repeat((4 - (normalized.length % 4)) % 4)
+  return Buffer.from(normalized + padding, 'base64').toString('utf-8')
 }
 
-function signPart(part: string) {
-  return crypto.createHmac('sha256', getSecret()).update(part).digest('base64url')
+function sign(input: string) {
+  return createHmac('sha256', getSecret()).update(input).digest('base64url')
 }
 
-export function signAuthToken(user: AuthUser, ttlSeconds = DEFAULT_TTL_SECONDS) {
-  const header = { alg: 'HS256', typ: 'JWT' }
-  const iat = Math.floor(Date.now() / 1000)
-  const exp = iat + ttlSeconds
-  const payload: TokenPayload = { sub: user.id, user, iat, exp }
-
-  const encodedHeader = base64UrlEncode(JSON.stringify(header))
-  const encodedPayload = base64UrlEncode(JSON.stringify(payload))
-  const signingInput = `${encodedHeader}.${encodedPayload}`
-  const signature = signPart(signingInput)
-
-  return `${signingInput}.${signature}`
+export function signAuthToken(user: AuthUser) {
+  const header = base64UrlEncode(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const payload = base64UrlEncode(
+    JSON.stringify({
+      user,
+      exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7,
+    } satisfies AuthPayload)
+  )
+  const signature = sign(`${header}.${payload}`)
+  return `${header}.${payload}.${signature}`
 }
 
 export function verifyAuthToken(token: string): AuthUser | null {
-  const parts = token.split('.')
-  if (parts.length !== 3) return null
-
-  const [encodedHeader, encodedPayload, signature] = parts
-  const signingInput = `${encodedHeader}.${encodedPayload}`
-  const expectedSignature = signPart(signingInput)
-
-  if (!crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature))) {
-    return null
-  }
-
   try {
-    const payload = JSON.parse(base64UrlDecode(encodedPayload)) as TokenPayload
-    const now = Math.floor(Date.now() / 1000)
-    if (!payload.exp || payload.exp < now) return null
-    return payload.user
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const [header, payload, signature] = parts
+    const expected = sign(`${header}.${payload}`)
+
+    const a = Buffer.from(signature)
+    const b = Buffer.from(expected)
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null
+
+    const parsed = JSON.parse(base64UrlDecode(payload)) as Partial<AuthPayload>
+    if (!parsed?.user || typeof parsed.exp !== 'number') return null
+    if (parsed.exp < Math.floor(Date.now() / 1000)) return null
+    return parsed.user as AuthUser
   } catch {
     return null
   }

@@ -1,11 +1,11 @@
 import { Camera, Trash2, UserPlus2, Users2 } from 'lucide-react'
 import React, { useEffect, useRef, useState } from 'react'
-import { User } from '../data/types'
+import { AuthUser, User } from '../data/types'
 import Photo from './Photo'
 import { deleteDbUser, getAllUsers, setDbUser, setImageUrl } from '../data/user'
 import CreateUserModal from './CreateUserModal'
 
-export default function Users({ currentUserId }: { currentUserId: string }) {
+export default function Users({ currentUser }: { currentUser: AuthUser }) {
   const [users, setUsers] = useState<User[]>([])
   const [openCreateModal, setOpenCreateModal] = useState(false)
 
@@ -38,7 +38,7 @@ export default function Users({ currentUserId }: { currentUserId: string }) {
 
       <div className='grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4'>
         {users.map((user) => (
-          <UsersCard key={user.id} user={user} onDelete={deleteDbUser} currentUserId={currentUserId} />
+          <UsersCard key={user.id} user={user} onDelete={deleteDbUser} currentUser={currentUser} />
         ))}
       </div>
 
@@ -54,17 +54,17 @@ export default function Users({ currentUserId }: { currentUserId: string }) {
 function UsersCard({
   user,
   onDelete,
-  currentUserId,
+  currentUser,
 }: {
   user: User
   onDelete: (uid: string) => Promise<void>
-  currentUserId: string
+  currentUser: AuthUser
 }) {
   const [uploading, setUploading] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
   const fileRef = useRef<HTMLInputElement | null>(null)
-  const isCurrentUser = user.id === currentUserId
+  const isCurrentUser = user.id === currentUser.id
 
   const handleDelete = async () => {
     if (isCurrentUser) return
@@ -124,15 +124,17 @@ function UsersCard({
             {uploading ? <p className='text-xs text-sky-600 mt-1'>Uploading image...</p> : null}
           </div>
         </div>
-        <button
-          type='button'
-          onClick={handleDelete}
-          disabled={deleting || isCurrentUser}
-          className='size-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed'
-          title={isCurrentUser ? 'Logged-in user cannot be deleted' : 'Delete user'}
-        >
-          <Trash2 size={15} />
-        </button>
+        {
+          currentUser.designation == "Sr. Manager" && <button
+            type='button'
+            onClick={handleDelete}
+            disabled={deleting || isCurrentUser || currentUser.designation != "Sr. Manager"}
+            className='size-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed'
+            title={isCurrentUser ? 'Logged-in user cannot be deleted' : 'Delete user'}
+          >
+            <Trash2 size={15} />
+          </button>
+        }
       </div>
       <div className='mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 flex items-center justify-between'>
         <span>Joined</span>

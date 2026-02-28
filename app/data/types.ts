@@ -1,3 +1,4 @@
+import { ST } from "next/dist/shared/lib/utils"
 
 export interface User{
     id: string,
@@ -28,7 +29,8 @@ export interface Tile {
 export interface Item{
     grid : string,
     history: string,
-    quantity : string
+    quantity : string,
+    createdBy : string
 }
 
 export interface SubmittedItems{
@@ -39,8 +41,12 @@ export interface SubmittedItems{
 
 export interface ExcelData{
     CODE : string, 
-    TOTAL : number,
     GRID : string,
     HISTORY : string,
-    QUANTITY : string
+    SUBMITTED: string
+}
+
+export interface Total{
+    CODE : String,
+    QUANTITY : number,
 }

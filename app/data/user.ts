@@ -57,24 +57,44 @@ export function getLiveUsers(callback: (users: User[]) => void) {
 
 
 export function getSubmittedUsers(callback : (users : string[])=>void){
+    const submitsRef = ref(db, '/inventory/submits')
 
-    const submittedByRef = ref(db, '/inventory/submits/submittedBy')
-
-    const unSubs = onValue(submittedByRef, snap=>{
-        if(!snap.exists()){
+    const unSubs = onValue(submitsRef, (snap) => {
+        if (!snap.exists()) {
             callback([])
             return
         }
+
         const data = snap.val()
-        if(!data || typeof data !== "object"){
+        if (!data || typeof data !== "object") {
             callback([])
             return
         }
-        const users = Object.keys(data)
-        callback(users)
+
+        const submittedUsers = Object.entries(data).filter(([uid, submitData]) => {
+            if (uid === 'submittedBy') {
+                return false
+            }
+
+            if (!submitData || typeof submitData !== "object") {
+                return false
+            }
+
+            return Object.values(submitData as Record<string, unknown>).some((value) => {
+                if (Array.isArray(value)) {
+                    return value.length > 0
+                }
+                if (value && typeof value === "object") {
+                    return Object.keys(value as Record<string, unknown>).length > 0
+                }
+                return value !== null && value !== undefined
+            })
+        }).map(([uid]) => uid)
+
+        callback(submittedUsers)
     })
 
-   return unSubs
+    return unSubs
 
 }
 
@@ -87,10 +107,6 @@ export function getAllUsers(callback : (users:User[])=>void){
         }
 
         const users = Object.values(snap.val())
-
-        console.log(users);
-        
-
         callback(users as User[])
 
     })

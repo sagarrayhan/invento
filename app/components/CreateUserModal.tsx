@@ -76,9 +76,16 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
           <Field icon={<UserRound size={16} />}><input type='text' placeholder='User Name' value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} className='input pl-10' /></Field>
           <Field icon={<Briefcase size={16} />}>
             <select value={form.designation} onChange={(e) => setForm((prev) => ({ ...prev, designation: e.target.value }))} className='input pl-10 appearance-none'>
-              <option value='Manager'>Manager</option>
-              <option value='Executive'>Executive</option>
-              <option value='Officer'>Officer</option>
+              <option value="Sr. Manager">Sr. Manager</option>
+              <option value="Manager">Manager</option>
+              <option value="Dep. Manager">Dep. Manager</option>
+              <option value="Ass. Manager">Ass. Manager</option>
+              <option value="Sr. Executive">Sr. Executive</option>
+              <option value="Executive">Executive</option>
+              <option value="Jr. Executive">Jr. Executive</option>
+              <option value="Sr. Officer">Sr. Officer</option>
+              <option value="Officer">Officer</option>
+              <option value="Jr. Officer">Jr. Officer</option>
             </select>
           </Field>
           <Field icon={<CalendarDays size={16} />}><input type='date' value={form.joinedAt} onChange={(e) => setForm((prev) => ({ ...prev, joinedAt: e.target.value }))} className='input pl-10' /></Field>

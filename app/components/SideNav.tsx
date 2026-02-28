@@ -14,7 +14,7 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
   const Icon = company.logo
 
   return (
-    <aside className='w-[270px] shrink-0 border-r border-slate-200/80 bg-white/75 backdrop-blur-xl p-5 md:p-6 flex flex-col justify-between'>
+    <aside className='w-67.5 shrink-0 border-r border-slate-200/80 bg-white/75 backdrop-blur-xl p-5 md:p-6 flex flex-col justify-between'>
       <div className='space-y-8'>
         <div className='flex items-center gap-3'>
           <div className='size-11 rounded-2xl bg-slate-700 text-white flex items-center justify-center shadow-md shadow-slate-700/20'>
@@ -36,11 +36,10 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
                 key={item.title}
                 type='button'
                 onClick={() => onSelect(item.title)}
-                className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center gap-3 transition ${
-                  active
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center gap-3 transition ${active
                     ? "bg-slate-700 text-white shadow-md shadow-slate-700/20"
                     : "text-slate-600 hover:bg-slate-100"
-                }`}
+                  }`}
               >
                 <NavIcon className='size-4.5' />
                 <span className='text-sm font-medium'>{item.title}</span>
@@ -62,6 +61,11 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
           <LogOut size={14} />
           Logout
         </button>
+        <p className='text-[11px] tracking-wide text-slate-500 text-center leading-relaxed'>
+          All rights reserved.
+          <br />
+          Coders Cottage (SR) &copy; {new Date().getFullYear()}
+        </p>
       </div>
     </aside>
   )
