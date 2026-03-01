@@ -103,6 +103,12 @@ function SubmitCard({ id }: { id: string }) {
     return () => unsubs()
   }, [id])
 
+  const handleDeleteSubmit = async (submitKey: string) => {
+    const ok = window.confirm('Are you sure you want to delete this submitted list?')
+    if (!ok) return
+    await removeFromSubmit(id, submitKey)
+  }
+
   return (
     <article className='surface p-5'>
       <div className='flex items-center gap-3 mb-5'>
@@ -127,7 +133,7 @@ function SubmitCard({ id }: { id: string }) {
                 <button type='button' className='size-9 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center' onClick={() => tilesToExcel(item)} title='Download Excel'>
                   <HardDriveDownload size={16} />
                 </button>
-                <button type='button' className='size-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center' onClick={() => removeFromSubmit(id, item.key)} title='Delete submit'>
+                <button type='button' className='size-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center' onClick={() => handleDeleteSubmit(item.key)} title='Delete submit'>
                   <Trash2 size={16} />
                 </button>
               </div>
