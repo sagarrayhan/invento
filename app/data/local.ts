@@ -1,4 +1,4 @@
-import { LayoutDashboard, Radio, Send, Users } from "lucide-react";
+import { Database, LayoutDashboard, Radio, Send, Users } from "lucide-react";
 import { Logo } from "../components/Logo";
 
 export const sideNave = [
@@ -17,6 +17,10 @@ export const sideNave = [
     {
         title: "Users",
         icon: Users
+    },
+    {
+        title: "Resources",
+        icon: Database
     }
 ]
 

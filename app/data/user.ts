@@ -128,4 +128,39 @@ export async function deleteDbUser(uid: string) {
     await remove(userRef)
 }
 
+export async function replaceInventoryCodes(codes: string[]) {
+  const codesRef = ref(db, "/inventory/codes")
+  await set(codesRef, codes)
+}
+
+export function getInventoryCodes(callback: (codes: string[]) => void) {
+  const codesRef = ref(db, "/inventory/codes")
+
+  const unsubscribe = onValue(codesRef, (snap) => {
+    if (!snap.exists()) {
+      callback([])
+      return
+    }
+
+    const value = snap.val()
+
+    if (Array.isArray(value)) {
+      callback(value.filter((item): item is string => typeof item === "string"))
+      return
+    }
+
+    if (value && typeof value === "object") {
+      const parsed = Object.values(value).filter(
+        (item): item is string => typeof item === "string"
+      )
+      callback(parsed)
+      return
+    }
+
+    callback([])
+  })
+
+  return unsubscribe
+}
+
 

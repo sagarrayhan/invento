@@ -7,6 +7,7 @@ import Submits from './components/Submits'
 import Users from './components/Users'
 import Login from './components/Login'
 import { AuthUser } from './data/types'
+import Resources from './components/Resources'
 
 export default function Page() {
   const [selected, setSelected] = useState('Dashboard')
@@ -44,6 +45,8 @@ export default function Page() {
         return <Submits />
       case 'Users':
         return <Users currentUser={currentUser} />
+      case 'Resources':
+        return <Resources />
       case 'Dashboard':
       default:
         return <Dashboard />
