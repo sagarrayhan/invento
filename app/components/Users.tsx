@@ -8,6 +8,7 @@ import CreateUserModal from './CreateUserModal'
 export default function Users({ currentUser }: { currentUser: AuthUser }) {
   const [users, setUsers] = useState<User[]>([])
   const [openCreateModal, setOpenCreateModal] = useState(false)
+  const canCreateUsers = currentUser.designation === 'Sr. Manager'
 
   useEffect(() => {
     const unsubs = getAllUsers(setUsers)
@@ -15,6 +16,7 @@ export default function Users({ currentUser }: { currentUser: AuthUser }) {
   }, [])
 
   const handleCreateUser = async (value: User) => {
+    if (!canCreateUsers) return
     await setDbUser(value)
   }
 
@@ -30,10 +32,12 @@ export default function Users({ currentUser }: { currentUser: AuthUser }) {
             <p className='text-sm text-slate-500'>Manage access and profile images for your team.</p>
           </div>
         </div>
-        <button type='button' onClick={() => setOpenCreateModal(true)} className='btn-primary'>
-          <UserPlus2 size={15} />
-          Create User
-        </button>
+        {canCreateUsers ? (
+          <button type='button' onClick={() => setOpenCreateModal(true)} className='btn-primary'>
+            <UserPlus2 size={15} />
+            Create User
+          </button>
+        ) : null}
       </div>
 
       <div className='grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4'>
@@ -42,11 +46,13 @@ export default function Users({ currentUser }: { currentUser: AuthUser }) {
         ))}
       </div>
 
-      <CreateUserModal
-        open={openCreateModal}
-        onClose={() => setOpenCreateModal(false)}
-        onSubmit={handleCreateUser}
-      />
+      {canCreateUsers ? (
+        <CreateUserModal
+          open={openCreateModal}
+          onClose={() => setOpenCreateModal(false)}
+          onSubmit={handleCreateUser}
+        />
+      ) : null}
     </div>
   )
 }
