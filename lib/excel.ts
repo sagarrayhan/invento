@@ -142,7 +142,7 @@ export function exportToExcel(items: any, ids: string[]) {
   const sheet = XLSX.utils.aoa_to_sheet([])
   XLSX.utils.sheet_add_aoa(sheet, [
     ["Tile Inventory Report"],
-    ids,
+    [`Created By: ${ids}`],
     ["Developed by Coders Cottage"],
     []
   ], {origin : "B2"})
