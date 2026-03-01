@@ -9,7 +9,7 @@ type AuthPayload = {
 }
 
 function getSecret() {
-  const secret = process.env.AUTH_SECRET
+  const secret = process.env.JWT_SECRET
   if (secret) return secret
   if (process.env.NODE_ENV !== 'production') return 'invento-dev-secret'
   throw new Error('AUTH_SECRET is not configured.')
