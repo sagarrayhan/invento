@@ -1,5 +1,5 @@
 import { get, onValue, ref, remove, set, update } from "firebase/database";
-import { User } from "./types";
+import { InventoryCode, User } from "./types";
 import { db } from "@/firebase/config";
 
 export async function setDbUser(user: User) {
@@ -128,12 +128,35 @@ export async function deleteDbUser(uid: string) {
     await remove(userRef)
 }
 
-export async function replaceInventoryCodes(codes: string[]) {
+export async function replaceInventoryCodes(codes: InventoryCode[]) {
   const codesRef = ref(db, "/inventory/codes")
   await set(codesRef, codes)
 }
 
-export function getInventoryCodes(callback: (codes: string[]) => void) {
+function toInventoryCode(value: unknown): InventoryCode | null {
+  if (typeof value === "string") {
+    return {
+      code: value.trim(),
+      size: "",
+    }
+  }
+
+  if (!value || typeof value !== "object") {
+    return null
+  }
+
+  const item = value as { code?: unknown; size?: unknown }
+  if (typeof item.code !== "string") {
+    return null
+  }
+
+  return {
+    code: item.code.trim(),
+    size: typeof item.size === "string" ? item.size.trim() : "",
+  }
+}
+
+export function getInventoryCodes(callback: (codes: InventoryCode[]) => void) {
   const codesRef = ref(db, "/inventory/codes")
 
   const unsubscribe = onValue(codesRef, (snap) => {
@@ -145,14 +168,17 @@ export function getInventoryCodes(callback: (codes: string[]) => void) {
     const value = snap.val()
 
     if (Array.isArray(value)) {
-      callback(value.filter((item): item is string => typeof item === "string"))
+      const parsed = value
+        .map((item) => toInventoryCode(item))
+        .filter((item): item is InventoryCode => item !== null && item.code.length > 0)
+      callback(parsed)
       return
     }
 
     if (value && typeof value === "object") {
-      const parsed = Object.values(value).filter(
-        (item): item is string => typeof item === "string"
-      )
+      const parsed = Object.values(value)
+        .map((item) => toInventoryCode(item))
+        .filter((item): item is InventoryCode => item !== null && item.code.length > 0)
       callback(parsed)
       return
     }

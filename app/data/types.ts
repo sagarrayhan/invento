@@ -1,5 +1,3 @@
-import { ST } from "next/dist/shared/lib/utils"
-
 export interface User{
     id: string,
     name : string,
@@ -47,6 +45,11 @@ export interface ExcelData{
 }
 
 export interface Total{
-    CODE : String,
+    CODE : string,
     QUANTITY : number,
+}
+
+export interface InventoryCode {
+    code: string
+    size: string
 }

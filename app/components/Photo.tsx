@@ -1,5 +1,4 @@
 
-import React from 'react'
 import Image from 'next/image'
 
 export default function Photo({ url, size }: { url: string, size: number }) {
@@ -10,6 +9,13 @@ export default function Photo({ url, size }: { url: string, size: number }) {
       width={size}
       height={size}
       alt='Image'
+      unoptimized
+      onError={(e) => {
+        const target = e.currentTarget as HTMLImageElement
+        if (!target.src.endsWith('/user.png')) {
+          target.src = '/user.png'
+        }
+      }}
     />
   )
 }

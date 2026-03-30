@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Send, UploadCloud } from 'lucide-react'
 import { getInventoryCodes, replaceInventoryCodes } from '../data/user'
+import type { InventoryCode } from '../data/types'
 
 export default function Resources() {
   const [rawCodes, setRawCodes] = useState('')
-  const [existingCodes, setExistingCodes] = useState<string[]>([])
+  const [existingCodes, setExistingCodes] = useState<InventoryCode[]>([])
   const [sending, setSending] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -15,11 +16,30 @@ export default function Resources() {
   }, [])
 
   const parsedCodes = useMemo(() => {
-    const cleaned = rawCodes
-      .split(/[,\n]+/)
-      .map((code) => String(code).trim())
+    return rawCodes
+      .split(/\r?\n/)
+      .map((line) => line.trim())
       .filter(Boolean)
-    return Array.from(new Set(cleaned))
+      .map((line) => {
+        const tabParts = line.split(/\t+/).map((part) => part.trim()).filter(Boolean)
+        if (tabParts.length >= 2) {
+          return { code: tabParts[0], size: tabParts.slice(1).join(' ') }
+        }
+
+        const commaParts = line.split(',').map((part) => part.trim()).filter(Boolean)
+        if (commaParts.length >= 2) {
+          return { code: commaParts[0], size: commaParts.slice(1).join(' ') }
+        }
+
+        const spaceParts = line.split(/\s+/).map((part) => part.trim()).filter(Boolean)
+        if (spaceParts.length >= 2) {
+          return { code: spaceParts[0], size: spaceParts.slice(1).join(' ') }
+        }
+
+        return { code: line, size: '' }
+      })
+      .filter((item) => item.code.length > 0)
+
   }, [rawCodes])
 
   const handleSend = async () => {
@@ -31,11 +51,16 @@ export default function Resources() {
       return
     }
 
+    if (parsedCodes.some((item) => item.size.length === 0)) {
+      setError('Each row must include both code and size.')
+      return
+    }
+
     try {
       setSending(true)
       await replaceInventoryCodes(parsedCodes)
       setRawCodes('')
-      setMessage(`Saved ${parsedCodes.length} codes to /inventory/codes.`)
+      setMessage(`Saved ${parsedCodes.length} code-size rows to /inventory/codes.`)
     } catch {
       setError('Failed to upload codes. Please try again.')
     } finally {
@@ -59,7 +84,7 @@ export default function Resources() {
         <div>
           <h2 className='text-base font-semibold text-slate-800'>Upload Codes</h2>
           <p className='text-sm text-slate-500 mt-1'>
-            Enter comma-separated tile codes like `SPH6601A, CPGVT4401A`. Sending will replace previous values.
+            Paste one row per line with code and size (example: `MW2300 20x30`, `MW2300,20x30`, or from spreadsheet with two columns).
           </p>
         </div>
 
@@ -67,12 +92,12 @@ export default function Resources() {
           className='input min-h-44'
           value={rawCodes}
           onChange={(e) => setRawCodes(e.target.value)}
-          placeholder='SPH6601A, CPGVT4401A'
+          placeholder={'MW2300\t20x30\nMW2300BK\t20x30'}
         />
 
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <p className='text-sm text-slate-600'>
-            Ready to send: <span className='font-semibold text-slate-800'>{parsedCodes.length}</span> codes
+            Ready to send: <span className='font-semibold text-slate-800'>{parsedCodes.length}</span> rows
           </p>
           <button type='button' onClick={handleSend} className='btn-primary' disabled={sending}>
             <Send size={14} />
@@ -90,12 +115,12 @@ export default function Resources() {
           <p className='text-sm text-slate-500'>No codes found in /inventory/codes.</p>
         ) : (
           <div className='flex flex-wrap gap-2'>
-            {existingCodes.map((code) => (
+            {existingCodes.map((item, index) => (
               <span
-                key={code}
+                key={`${item.code}-${item.size}-${index}`}
                 className='inline-flex items-center rounded-full bg-slate-100 text-slate-700 px-3 py-1 text-xs font-medium'
               >
-                {code}
+                {item.code}{item.size ? ` (${item.size})` : ''}
               </span>
             ))}
           </div>
