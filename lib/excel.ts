@@ -35,10 +35,13 @@ export async function tilesToExcel(submits: SubmittedItems) {
   }
   const tilesSheet = XLSX.utils.aoa_to_sheet([])
 
+  // Format date as dd-mm-yyyy
+  const now = new Date();
+  const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
   XLSX.utils.sheet_add_aoa(tilesSheet, [
     ["Tile Inventory Report"],
     [`Created By: ${creator}`],
-    [`Date: ${new Date().toLocaleDateString()}`],
+    [`Date: ${formattedDate}`],
     []
   ], { origin: "B2" })
 
@@ -150,10 +153,14 @@ export async function donwloadDetailed(ids: string[]) {
 export function exportToExcel(items: Array<ExcelData | Total>, ids: string[]) {
 
   const sheet = XLSX.utils.aoa_to_sheet([])
+  // Format date as dd-mm-yyyy
+  const now = new Date();
+  const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
   XLSX.utils.sheet_add_aoa(sheet, [
     ["Tile Inventory Report"],
     [`Created By: ${ids}`],
     ["Developed by Coders Cottage"],
+    [`Date: ${formattedDate}`],
     []
   ], {origin : "B2"})
 
