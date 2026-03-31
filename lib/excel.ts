@@ -1,8 +1,5 @@
 import { getAllSubmittedData } from "@/app/data/tiles";
 import { ExcelData, Item, SubmittedItems, Tile, Total } from "@/app/data/types";
-import { getDbUser } from "@/app/data/user";
-import { Code } from "lucide-react";
-import { it } from "node:test";
 import * as XLSX from 'xlsx'
 
 
@@ -12,19 +9,22 @@ export async function tilesToExcel(submits: SubmittedItems) {
 
   const plainData: ExcelData[] = []
 
-  const creator = submits.items[0].items[0].createdBy
+  const creator = submits.items[0]?.items[0]?.createdBy || "Unknown"
+
+  let index = 0
 
 
-  submits.items.forEach((item, index) => {
+  submits.items.forEach((item) => {
     const nestedItems = item.items || []
     nestedItems.forEach(g => {
+      index += 1
       plainData.push({
-        INDEX : index+1,
+        INDEX : index,
         CODE: item.code,
         SIZE : item.size,
         GRID: g.grid,
         HISTORY: g.history,
-        TOTAL : item.quantity,
+        TOTAL : g.quantity,
         SUBMITTED: g.createdBy
       })
     })
@@ -96,7 +96,7 @@ export async function downloadTotal(ids: string[]) {
 
   const data = await getAllSubmittedData(ids)
   const tiles = data.flat()
-
+  let index = 0
   const map = new Map<string, number>()
 
   tiles.forEach(tile => {
@@ -111,7 +111,9 @@ export async function downloadTotal(ids: string[]) {
   const flatData: Total[] = []
 
   map.forEach((totalQuantity, code) => {
+    index+=1
     flatData.push({
+      INDEX : index,
       CODE: code,
       QUANTITY: totalQuantity
     })
@@ -122,17 +124,19 @@ export async function downloadTotal(ids: string[]) {
 
 export async function donwloadDetailed(ids: string[]) {
   const mergedTile = mergeAll(ids)
+  let rowIndex = 0
   const flatData: ExcelData[] = [];
 
-  (await mergedTile).forEach((tile,index) => {
-    tile.items.forEach(i => {
+  (await mergedTile).forEach((tile: Tile) => {
+    tile.items.forEach((i: Item) => {
+      rowIndex += 1
       flatData.push({
-        INDEX : index+1,
+        INDEX : rowIndex,
         CODE: tile.code,
         SIZE : tile.size,
         GRID: i.grid,
         HISTORY: i.history,
-        TOTAL : tile.quantity,
+        TOTAL : i.quantity,
         SUBMITTED: i.createdBy
       })
 
@@ -143,7 +147,7 @@ export async function donwloadDetailed(ids: string[]) {
 
 }
 
-export function exportToExcel(items: any, ids: string[]) {
+export function exportToExcel(items: Array<ExcelData | Total>, ids: string[]) {
 
   const sheet = XLSX.utils.aoa_to_sheet([])
   XLSX.utils.sheet_add_aoa(sheet, [

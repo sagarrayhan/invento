@@ -123,22 +123,37 @@ function SubmitCard({ id }: { id: string }) {
         <p className='text-sm text-slate-500'>No lists submitted.</p>
       ) : (
         <div className='space-y-2.5'>
-          {items.map((item, index) => (
-            <div key={item.key} className='rounded-xl border border-slate-200 bg-white p-3.5 flex items-center justify-between gap-3'>
-              <div>
-                <h3 className='text-sm font-semibold text-slate-800'>List {index + 1}</h3>
-                <p className='text-xs text-slate-500 mt-1'>{item.items.length} rows</p>
+          {items.map((item, index) => {
+            const submittedAt = item.items[0]?.createdAt;
+            let submittedText = '';
+            if (submittedAt) {
+              // If createdAt is a string or number timestamp, parse it as a number
+              const ts = typeof submittedAt === 'string' ? Number(submittedAt) : submittedAt;
+              const date = new Date(ts);
+              submittedText = isNaN(date.getTime()) ? '' : date.toLocaleString();
+            }
+            return (
+              <div key={item.key} className='rounded-xl border border-slate-200 bg-white p-3.5 flex flex-col gap-2'>
+                <div className='flex items-center justify-between'>
+                  <h3 className='text-sm font-semibold text-slate-800'>List {index + 1}</h3>
+                  {submittedText && (
+                    <span className='text-xs text-slate-400 whitespace-nowrap'>Submitted: {submittedText}</span>
+                  )}
+                </div>
+                <div className='flex items-center justify-between'>
+                  <p className='text-xs text-slate-500'>{item.items.length} rows</p>
+                  <div className='flex items-center gap-2'>
+                    <button type='button' className='size-9 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center' onClick={() => tilesToExcel(item)} title='Download Excel'>
+                      <HardDriveDownload size={16} />
+                    </button>
+                    <button type='button' className='size-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center' onClick={() => handleDeleteSubmit(item.key)} title='Delete submit'>
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className='flex items-center gap-2'>
-                <button type='button' className='size-9 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center' onClick={() => tilesToExcel(item)} title='Download Excel'>
-                  <HardDriveDownload size={16} />
-                </button>
-                <button type='button' className='size-9 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center' onClick={() => handleDeleteSubmit(item.key)} title='Delete submit'>
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </article>

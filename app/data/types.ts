@@ -44,11 +44,12 @@ export interface ExcelData{
     SIZE: string,
     GRID : string,
     HISTORY : string,
-    TOTAL : number,
+    TOTAL : string,
     SUBMITTED: string
 }
 
 export interface Total{
+    INDEX : number,
     CODE : string,
     QUANTITY : number,
 }
