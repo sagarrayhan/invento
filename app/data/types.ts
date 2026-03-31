@@ -17,7 +17,8 @@ export interface AuthUser {
 
 export interface Tile {
     id: string
-    code: string
+    code: string,
+    size:string,
     createdAt: string
     createdBy: string
     items: Item[]
@@ -39,8 +40,10 @@ export interface SubmittedItems{
 
 export interface ExcelData{
     CODE : string, 
+    SIZE: string,
     GRID : string,
     HISTORY : string,
+    TOTAL : number,
     SUBMITTED: string
 }
 

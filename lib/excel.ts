@@ -20,8 +20,10 @@ export async function tilesToExcel(submits: SubmittedItems) {
     nestedItems.forEach(g => {
       plainData.push({
         CODE: item.code,
+        SIZE : item.size,
         GRID: g.grid,
         HISTORY: g.history,
+        TOTAL : item.quantity,
         SUBMITTED: g.createdBy
       })
     })
@@ -125,8 +127,10 @@ export async function donwloadDetailed(ids: string[]) {
     tile.items.forEach(i => {
       flatData.push({
         CODE: tile.code,
+        SIZE : tile.size,
         GRID: i.grid,
         HISTORY: i.history,
+        TOTAL : tile.quantity,
         SUBMITTED: i.createdBy
       })
 
