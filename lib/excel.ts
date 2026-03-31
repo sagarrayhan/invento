@@ -15,10 +15,11 @@ export async function tilesToExcel(submits: SubmittedItems) {
   const creator = submits.items[0].items[0].createdBy
 
 
-  submits.items.forEach(item => {
+  submits.items.forEach((item, index) => {
     const nestedItems = item.items || []
     nestedItems.forEach(g => {
       plainData.push({
+        INDEX : index+1,
         CODE: item.code,
         SIZE : item.size,
         GRID: g.grid,
@@ -123,9 +124,10 @@ export async function donwloadDetailed(ids: string[]) {
   const mergedTile = mergeAll(ids)
   const flatData: ExcelData[] = [];
 
-  (await mergedTile).forEach(tile => {
+  (await mergedTile).forEach((tile,index) => {
     tile.items.forEach(i => {
       flatData.push({
+        INDEX : index+1,
         CODE: tile.code,
         SIZE : tile.size,
         GRID: i.grid,

@@ -39,6 +39,7 @@ export interface SubmittedItems{
 
 
 export interface ExcelData{
+    INDEX : number,
     CODE : string, 
     SIZE: string,
     GRID : string,
