@@ -1,7 +1,12 @@
 import { getAllSubmittedData } from "@/app/data/tiles";
+<<<<<<< HEAD
 import { ExcelData, ExcelDataInd, Item, SubmittedItems, Tile, Total } from "@/app/data/types";
 import { getDbUser } from "@/app/data/user";
 import { formatDateDDMMYYYY } from "@/lib/date";
+=======
+import { ExcelData, Item, SubmittedItems, Tile, Total, User } from "@/app/data/types";
+import { getDbUser } from "@/app/data/user";
+>>>>>>> baa7cae27d1c75174568062badc83ec23fc560ba
 import * as XLSX from 'xlsx'
 
 
@@ -32,7 +37,11 @@ export async function tilesToExcel(submits: SubmittedItems) {
 
   const creator = submits.items[0]?.items[0]?.createdBy || "Unknown"
 
+<<<<<<< HEAD
   const user = await getDbUser(creator)
+=======
+  const user: User = await getDbUser(creator)
+>>>>>>> baa7cae27d1c75174568062badc83ec23fc560ba
 
   let index = 0
 
@@ -47,7 +56,12 @@ export async function tilesToExcel(submits: SubmittedItems) {
         SIZE: item.size,
         GRID: g.grid,
         HISTORY: g.history,
+<<<<<<< HEAD
         TOTAL: g.quantity
+=======
+        TOTAL : g.quantity,
+        SUBMITTED: ""
+>>>>>>> baa7cae27d1c75174568062badc83ec23fc560ba
       })
     })
   })
@@ -60,7 +74,11 @@ export async function tilesToExcel(submits: SubmittedItems) {
   const formattedDate = formatDateDDMMYYYY(new Date())
   XLSX.utils.sheet_add_aoa(tilesSheet, [
     ["Tile Inventory Report"],
+<<<<<<< HEAD
     [`Created By: ${user?.name} (${user?.id})`],
+=======
+    [`Created By: ${user.name} (${user.id})`],
+>>>>>>> baa7cae27d1c75174568062badc83ec23fc560ba
     [`Date: ${formattedDate}`],
     []
   ], { origin: "B2" })
