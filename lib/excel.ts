@@ -57,12 +57,13 @@ function applyTableFeatures<T extends object>(
     ref: `${XLSX.utils.encode_col(startCol)}${startRow}:${XLSX.utils.encode_col(endCol)}${endRow}`,
   };
 
-  applyTableBorders(sheet, startCol, endCol, startRow, endRow);
+  applyTableBorders(sheet, keys, startCol, endCol, startRow, endRow);
   applyColumnHeaderBold(sheet, startCol, endCol, startRow);
 }
 
 function applyTableBorders(
   sheet: XLSX.WorkSheet,
+  keys: string[],
   startCol: number,
   endCol: number,
   startRow: number,
@@ -74,14 +75,14 @@ function applyTableBorders(
     left: { style: "thin", color: { rgb: "BFC5D1" } },
     right: { style: "thin", color: { rgb: "BFC5D1" } },
   };
-  const alignment = {
-    horizontal: "center",
-    vertical: "center",
-    wrapText: true,
-  } as const;
-
   for (let row = startRow; row <= endRow; row += 1) {
     for (let col = startCol; col <= endCol; col += 1) {
+      const key = keys[col - startCol] || "";
+      const alignment = {
+        horizontal: key === "CODE" ? "left" : "center",
+        vertical: "center",
+        wrapText: true,
+      } as const;
       const ref = XLSX.utils.encode_cell({ r: row - 1, c: col });
       const cell = sheet[ref] || { t: "s", v: "" };
       (cell as XLSX.CellObject & { s?: unknown }).s = {
