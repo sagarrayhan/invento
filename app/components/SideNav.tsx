@@ -14,19 +14,18 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
   const Icon = company.logo
 
   return (
-    <aside className='w-67.5 shrink-0 border-r border-slate-200/80 bg-white/75 backdrop-blur-xl p-5 md:p-6 flex flex-col justify-between'>
-      <div className='space-y-8'>
-        <div className='flex items-center gap-3'>
-          <div className='size-11 rounded-2xl bg-slate-700 text-white flex items-center justify-center shadow-md shadow-slate-700/20'>
-            <Icon className='size-5' />
-          </div>
-          <div>
-            <p className='font-semibold text-slate-800 leading-none'>{company.name}</p>
-            <p className='text-xs text-slate-500 mt-1'>{company.motto}</p>
-          </div>
+    <aside className='w-67.5 shrink-0 border-r border-slate-200/70 bg-[#e9ecf0]/80 backdrop-blur-xl p-5 md:p-6 grid grid-rows-[auto_1fr_auto] gap-6 min-h-0'>
+      <div className='flex items-center gap-3'>
+        <div className='size-11 rounded-2xl neu-soft text-slate-700 flex items-center justify-center'>
+          <Icon className='size-5' />
         </div>
+        <div>
+          <p className='font-semibold text-slate-800 leading-none'>{company.name}</p>
+          <p className='text-xs text-slate-500 mt-1'>{company.motto}</p>
+        </div>
+      </div>
 
-        <nav className='space-y-1.5'>
+      <nav className='space-y-1.5 overflow-y-auto pr-1 min-h-0'>
           {sideNave.map((item) => {
             const NavIcon = item.icon
             const active = selected === item.title
@@ -36,9 +35,9 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
                 key={item.title}
                 type='button'
                 onClick={() => onSelect(item.title)}
-                className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center gap-3 transition ${active
-                    ? "bg-slate-700 text-white shadow-md shadow-slate-700/20"
-                    : "text-slate-600 hover:bg-slate-100"
+                className={`w-full text-left px-3.5 py-2.5 rounded-xl flex items-center gap-3 transition bg-transparent shadow-none ${active
+                    ? "border border-slate-200/80 bg-[#e7ebf1] text-slate-800 shadow-inner hover:bg-[#e7ebf1] hover:shadow-inner"
+                    : "text-slate-600 hover:border hover:border-slate-200/80 hover:bg-[#edf0f4] hover:shadow-sm active:shadow-inner"
                   }`}
               >
                 <NavIcon className='size-4.5' />
@@ -46,12 +45,13 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
               </button>
             )
           })}
-        </nav>
-      </div>
+      </nav>
 
       <div className='space-y-4'>
-        <div className='rounded-2xl border border-slate-200/80 bg-white p-3 flex items-center gap-3'>
-          <Photo url={currentUser.imageUrl} size={42} />
+        <div className='rounded-2xl neu-inset p-3 flex items-center gap-3'>
+          <div className='rounded-full p-1 neu-inset'>
+            <Photo url={currentUser.imageUrl} size={42} />
+          </div>
           <div className='min-w-0'>
             <p className='text-sm font-semibold text-slate-800 truncate'>{currentUser.name}</p>
             <p className='text-xs text-slate-500 truncate'>{currentUser.id}</p>
@@ -70,3 +70,4 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
     </aside>
   )
 }
+

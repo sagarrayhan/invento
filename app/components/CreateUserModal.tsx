@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
-import { Briefcase, CalendarDays, Eye, EyeOff, KeyRound, UserRound, X } from 'lucide-react'
+import { Briefcase, CalendarDays, Eye, EyeOff, IdCard, KeyRound, UserRound, X } from 'lucide-react'
 import { User } from '../data/types'
+import { formatDateDDMMYYYY } from '@/lib/date'
 
 interface CreateUserModalProps {
   open: boolean
@@ -32,12 +33,18 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
       return
     }
 
+    const normalizedJoinedAt = formatDateDDMMYYYY(form.joinedAt.trim())
+    if (!normalizedJoinedAt) {
+      setError('Joined date must be in dd-mm-yyyy format.')
+      return
+    }
+
     try {
       setSubmitting(true)
       await onSubmit({
         id: form.id.trim(),
         designation: form.designation.trim(),
-        joinedAt: form.joinedAt.trim(),
+        joinedAt: normalizedJoinedAt,
         password: form.password,
         name: form.name.trim(),
         imageUrl: '',
@@ -60,7 +67,7 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
 
   return (
     <div className='fixed inset-0 z-50 bg-slate-500/25 backdrop-blur-sm flex items-center justify-center p-4'>
-      <form onSubmit={handleSubmit} className='w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl shadow-slate-500/15'>
+      <form onSubmit={handleSubmit} className='w-full max-w-md rounded-3xl border border-slate-200 bg-[var(--surface)] p-6 shadow-sm'>
         <div className='flex items-start justify-between mb-5'>
           <div>
             <h2 className='text-xl font-semibold text-slate-900'>Create User</h2>
@@ -72,7 +79,7 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
         </div>
 
         <div className='space-y-3'>
-          <Field icon={<UserRound size={16} />}><input type='text' placeholder='User ID' value={form.id} onChange={(e) => setForm((prev) => ({ ...prev, id: e.target.value }))} className='input pl-10' /></Field>
+          <Field icon={<IdCard size={16} />}><input type='text' placeholder='User ID' value={form.id} onChange={(e) => setForm((prev) => ({ ...prev, id: e.target.value }))} className='input pl-10' /></Field>
           <Field icon={<UserRound size={16} />}><input type='text' placeholder='User Name' value={form.name} onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))} className='input pl-10' /></Field>
           <Field icon={<Briefcase size={16} />}>
             <select value={form.designation} onChange={(e) => setForm((prev) => ({ ...prev, designation: e.target.value }))} className='input pl-10 appearance-none'>
@@ -88,7 +95,24 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
               <option value="Jr. Officer">Jr. Officer</option>
             </select>
           </Field>
-          <Field icon={<CalendarDays size={16} />}><input type='date' value={form.joinedAt} onChange={(e) => setForm((prev) => ({ ...prev, joinedAt: e.target.value }))} className='input pl-10' /></Field>
+          <Field icon={<CalendarDays size={16} />}>
+            <input
+              type='text'
+              placeholder='dd-mm-yyyy'
+              value={form.joinedAt}
+              onChange={(e) => setForm((prev) => ({ ...prev, joinedAt: e.target.value }))}
+              onBlur={(e) => {
+                const normalized = formatDateDDMMYYYY(e.target.value)
+                if (normalized) {
+                  setForm((prev) => ({ ...prev, joinedAt: normalized }))
+                }
+              }}
+              className='input pl-10'
+              inputMode='numeric'
+              pattern='\\d{2}-\\d{2}-\\d{4}'
+              title='Use dd-mm-yyyy format'
+            />
+          </Field>
           <Field icon={<KeyRound size={16} />}>
             <input type={showPassword ? 'text' : 'password'} placeholder='Password' value={form.password} onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))} className='input pl-10 pr-10' />
             <button type='button' onClick={() => setShowPassword((prev) => !prev)} className='absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700'>
@@ -97,7 +121,7 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
           </Field>
         </div>
 
-        {error ? <p className='text-sm text-rose-500 mt-3'>{error}</p> : null}
+        {error ? <p className='text-sm text-slate-600 mt-3'>{error}</p> : null}
 
         <div className='mt-5 flex justify-end gap-2'>
           <button type='button' onClick={onClose} disabled={submitting} className='btn-secondary'>

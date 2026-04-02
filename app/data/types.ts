@@ -48,6 +48,15 @@ export interface ExcelData{
     SUBMITTED: string
 }
 
+export interface ExcelDataInd{
+    INDEX : number,
+    CODE : string, 
+    SIZE: string,
+    GRID : string,
+    HISTORY : string,
+    TOTAL : string
+}
+
 export interface Total{
     INDEX : number,
     CODE : string,

@@ -43,19 +43,21 @@ export default function Login({ onLogin }: { onLogin: (user: AuthUser) => void }
   return (
     <div className='app-shell flex items-center justify-center'>
       <div className='grid lg:grid-cols-[1.05fr_0.95fr] w-full max-w-5xl surface overflow-hidden'>
-        <div className='hidden lg:flex flex-col justify-between p-10 bg-slate-700 text-white'>
+        <div className='hidden lg:flex flex-col justify-between p-10 bg-[#eceff3] text-slate-700 border-r border-slate-200/70'>
           <div className='flex items-center gap-3'>
-            <Logo className='size-10' />
+            <div className='size-12 rounded-2xl neu-inset flex items-center justify-center'>
+              <Logo className='size-8' />
+            </div>
             <h1 className='text-2xl font-semibold'>Invento</h1>
           </div>
           <div>
             <h2 className='text-4xl font-semibold leading-tight'>Inventory intelligence with live control.</h2>
-            <p className='text-slate-200 mt-3'>Track users, live activity, and submit flows from one dashboard.</p>
+            <p className='text-slate-500 mt-3'>Track users, live activity, and submit flows from one dashboard.</p>
           </div>
-          <p className='text-xs text-slate-300'>Secure access for your team workspace</p>
+          <p className='text-xs text-slate-500'>Secure access for your team workspace</p>
         </div>
 
-        <div className='p-7 md:p-10 bg-white'>
+        <div className='p-7 md:p-10 bg-[#eceff3]'>
           <div className='mb-7'>
             <p className='text-xs tracking-[0.18em] uppercase text-slate-400'>Welcome Back</p>
             <h2 className='heading-lg mt-2'>Sign in to continue</h2>
@@ -85,10 +87,11 @@ export default function Login({ onLogin }: { onLogin: (user: AuthUser) => void }
               {loading ? 'Signing in...' : 'Sign In'}
               {loading? <LoaderCircleIcon className=' animate-spin'/> : <ArrowRight size={15}/> }
             </button>
-            <p className='text-sm text-rose-500 min-h-5'>{error}</p>
+            <p className='text-sm text-slate-600 min-h-5'>{error}</p>
           </div>
         </div>
       </div>
     </div>
   )
 }
+

@@ -1,15 +1,38 @@
 import { getAllSubmittedData } from "@/app/data/tiles";
-import { ExcelData, Item, SubmittedItems, Tile, Total } from "@/app/data/types";
+import { ExcelData, ExcelDataInd, Item, SubmittedItems, Tile, Total } from "@/app/data/types";
+import { getDbUser } from "@/app/data/user";
+import { formatDateDDMMYYYY } from "@/lib/date";
 import * as XLSX from 'xlsx'
 
 
+const toNumber = (value: number | string | undefined | null) => {
+  const num = Number(value)
+  return Number.isFinite(num) ? num : 0
+}
+
+function triggerExcelDownload(buffer: ArrayBuffer, filename: string) {
+  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement("a")
+  a.href = url
+  a.download = filename
+  a.click()
+  window.URL.revokeObjectURL(url)
+}
+
+async function getFlattenedSubmittedTiles(ids: string[]) {
+  const data = await getAllSubmittedData(ids)
+  return data.flat()
+}
 
 export async function tilesToExcel(submits: SubmittedItems) {
 
 
-  const plainData: ExcelData[] = []
+  const plainData: ExcelDataInd[] = []
 
   const creator = submits.items[0]?.items[0]?.createdBy || "Unknown"
+
+  const user = await getDbUser(creator)
 
   let index = 0
 
@@ -19,13 +42,12 @@ export async function tilesToExcel(submits: SubmittedItems) {
     nestedItems.forEach(g => {
       index += 1
       plainData.push({
-        INDEX : index,
+        INDEX: index,
         CODE: item.code,
-        SIZE : item.size,
+        SIZE: item.size,
         GRID: g.grid,
         HISTORY: g.history,
-        TOTAL : g.quantity,
-        SUBMITTED: g.createdBy
+        TOTAL: g.quantity
       })
     })
   })
@@ -35,88 +57,93 @@ export async function tilesToExcel(submits: SubmittedItems) {
   }
   const tilesSheet = XLSX.utils.aoa_to_sheet([])
 
-  // Format date as dd-mm-yyyy
-  const now = new Date();
-  const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+  const formattedDate = formatDateDDMMYYYY(new Date())
   XLSX.utils.sheet_add_aoa(tilesSheet, [
     ["Tile Inventory Report"],
-    [`Created By: ${creator}`],
+    [`Created By: ${user?.name} (${user?.id})`],
     [`Date: ${formattedDate}`],
     []
   ], { origin: "B2" })
 
-  XLSX.utils.sheet_add_json(tilesSheet, plainData, { origin: "B6" })
   const book = XLSX.utils.book_new()
+  XLSX.utils.sheet_add_json(tilesSheet, plainData, { origin: "B7" })
   XLSX.utils.book_append_sheet(book, tilesSheet, "Tiles List")
   const buffer = XLSX.write(book, { bookType: 'xlsx', type: 'array' })
-
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
-
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = `${submits.key}.xlsx`
-  a.click()
+  triggerExcelDownload(buffer, `${user?.name} (${user?.id}).xlsx`)
 }
 
 export async function mergeAll(ids: string[]): Promise<Tile[]> {
-  const data = await getAllSubmittedData(ids)
-  const tiles = data.flat()
+  const tiles = await getFlattenedSubmittedTiles(ids)
+  const tileMap = new Map<string, Tile>()
+  const gridMapByCode = new Map<string, Map<string, Item>>()
 
-
-  const mapTile = new Map<string, Tile>()
-
-  tiles.forEach(tile => {
-    if (!mapTile.has(tile.code)) {
-      mapTile.set(tile.code, { ...tile, items: [...tile.items] })
-    } else {
-      const existingTile = mapTile.get(tile.code)
-      tile.items.forEach(i => {
-        const existingGrid = existingTile?.items.find(ei => ei.grid == i.grid)
-        if (!existingGrid) {
-          existingTile?.items.push(i)
-        } else {
-          existingGrid.quantity += Number(i.quantity)
-          existingGrid.history =
-            (existingGrid.history || "") +
-            "+" +
-            (i.history || "").replace(/^=/, "")
-        }
-      })
-
-      existingTile!.quantity = existingTile!.items.reduce((sum, i) => sum + Number(i.quantity || 0), 0)
-
+  for (const tile of tiles) {
+    const existingTile = tileMap.get(tile.code)
+    if (!existingTile) {
+      const clonedItems = tile.items.map((item) => ({
+        ...item,
+        quantity: String(toNumber(item.quantity)),
+      }))
+      const nextTile: Tile = {
+        ...tile,
+        items: clonedItems,
+        quantity: clonedItems.reduce((sum, item) => sum + toNumber(item.quantity), 0),
+      }
+      tileMap.set(tile.code, nextTile)
+      gridMapByCode.set(
+        tile.code,
+        new Map(clonedItems.map((item) => [item.grid, item])),
+      )
+      continue
     }
-  })
 
-  const items = Array.from(mapTile.values())
+    const gridMap = gridMapByCode.get(tile.code) || new Map<string, Item>()
+    for (const incoming of tile.items) {
+      const existingGrid = gridMap.get(incoming.grid)
+      if (!existingGrid) {
+        const nextItem: Item = {
+          ...incoming,
+          quantity: String(toNumber(incoming.quantity)),
+        }
+        existingTile.items.push(nextItem)
+        gridMap.set(incoming.grid, nextItem)
+        continue
+      }
 
+      existingGrid.quantity = String(toNumber(existingGrid.quantity) + toNumber(incoming.quantity))
+      const normalizedHistory = (incoming.history || "").replace(/^=/, "")
+      existingGrid.history = normalizedHistory
+        ? `${existingGrid.history || ""}+${normalizedHistory}`
+        : existingGrid.history
+    }
 
-  return items
+    existingTile.quantity = existingTile.items.reduce(
+      (sum, item) => sum + toNumber(item.quantity),
+      0,
+    )
+    gridMapByCode.set(tile.code, gridMap)
+  }
+
+  return Array.from(tileMap.values())
 }
 
 export async function downloadTotal(ids: string[]) {
 
-  const data = await getAllSubmittedData(ids)
-  const tiles = data.flat()
+  const tiles = await getFlattenedSubmittedTiles(ids)
   let index = 0
   const map = new Map<string, number>()
 
-  tiles.forEach(tile => {
-
-    tile.items?.forEach(item => {
-      const existing = map.get(tile.code) || 0
-      map.set(tile.code, existing + Number(item.quantity || 0))
-    })
-
-  })
+  for (const tile of tiles) {
+    const tileTotal = tile.items.reduce((sum, item) => sum + toNumber(item.quantity), 0)
+    map.set(tile.code, (map.get(tile.code) || 0) + tileTotal)
+  }
 
   const flatData: Total[] = []
 
   map.forEach((totalQuantity, code) => {
-    index+=1
+    index += 1
     flatData.push({
-      INDEX : index,
+      INDEX: index,
       CODE: code,
       QUANTITY: totalQuantity
     })
@@ -126,20 +153,20 @@ export async function downloadTotal(ids: string[]) {
 }
 
 export async function donwloadDetailed(ids: string[]) {
-  const mergedTile = mergeAll(ids)
+  const mergedTile = await mergeAll(ids)
   let rowIndex = 0
   const flatData: ExcelData[] = [];
 
-  (await mergedTile).forEach((tile: Tile) => {
+  mergedTile.forEach((tile: Tile) => {
     tile.items.forEach((i: Item) => {
       rowIndex += 1
       flatData.push({
-        INDEX : rowIndex,
+        INDEX: rowIndex,
         CODE: tile.code,
-        SIZE : tile.size,
+        SIZE: tile.size,
         GRID: i.grid,
         HISTORY: i.history,
-        TOTAL : i.quantity,
+        TOTAL: i.quantity,
         SUBMITTED: i.createdBy
       })
 
@@ -153,26 +180,18 @@ export async function donwloadDetailed(ids: string[]) {
 export function exportToExcel(items: Array<ExcelData | Total>, ids: string[]) {
 
   const sheet = XLSX.utils.aoa_to_sheet([])
-  // Format date as dd-mm-yyyy
-  const now = new Date();
-  const formattedDate = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth() + 1).padStart(2, '0')}-${now.getFullYear()}`;
+  const formattedDate = formatDateDDMMYYYY(new Date())
   XLSX.utils.sheet_add_aoa(sheet, [
     ["Tile Inventory Report"],
     [`Created By: ${ids}`],
     ["Developed by Coders Cottage"],
     [`Date: ${formattedDate}`],
     []
-  ], {origin : "B2"})
+  ], { origin: "B2" })
 
-  XLSX.utils.sheet_add_json(sheet, items,{origin: "B6"})
+  XLSX.utils.sheet_add_json(sheet, items, { origin: "B6" })
   const book = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(book, sheet, "Merged sheet")
   const buffer = XLSX.write(book, { bookType: 'xlsx', type: 'array' })
-
-  const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
-  const url = window.URL.createObjectURL(blob)
-  const a = document.createElement("a")
-  a.href = url
-  a.download = "Download.xlsx"
-  a.click()
+  triggerExcelDownload(buffer, "Download.xlsx")
 }

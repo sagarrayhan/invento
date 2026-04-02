@@ -2,18 +2,29 @@ import { get, onValue, ref, remove, set, update } from "firebase/database";
 import { InventoryCode, User } from "./types";
 import { db } from "@/firebase/config";
 
+const userCache = new Map<string, User | null>()
+
 export async function setDbUser(user: User) {
   const userRef = ref(db, `/inventory/users/${user.id}`)
   await set(userRef, user)
+  userCache.set(user.id, user)
 }
 
 export function getDbUser(id: string): Promise<User | null> {
+    const cached = userCache.get(id)
+    if (cached !== undefined) {
+        return Promise.resolve(cached)
+    }
+
     const userRef = ref(db, `/inventory/users/${id}`)
     return get(userRef).then(snap => {
         if (!snap.exists()) {
+            userCache.set(id, null)
             return null
         }
-        return snap.val() as User
+        const user = snap.val() as User
+        userCache.set(id, user)
+        return user
     })
 }
 
@@ -39,10 +50,13 @@ export function getLiveUsers(callback: (users: User[]) => void) {
         // Step 3: Extract user IDs
         const keys = Object.keys(data)
         
-        // Step 4: Fetch all users in parallel
-        const users = await Promise.all(
-            keys.map((key) => getDbUser(key))
-        )
+        // Step 4: Fetch only uncached users
+        const unknownIds = keys.filter((key) => !userCache.has(key))
+        if (unknownIds.length > 0) {
+            await Promise.all(unknownIds.map((key) => getDbUser(key)))
+        }
+
+        const users = keys.map((key) => userCache.get(key) ?? null)
 
         const validUsers = users.filter(
             (user): user is User => user !== null
@@ -106,8 +120,9 @@ export function getAllUsers(callback : (users:User[])=>void){
             return
         }
 
-        const users = Object.values(snap.val())
-        callback(users as User[])
+        const users = Object.values(snap.val()) as User[]
+        users.forEach((user) => userCache.set(user.id, user))
+        callback(users)
 
     })
 
@@ -121,11 +136,20 @@ export async function setImageUrl(imageUrl:string, uid: string){
     update(urlRef, {
         imageUrl : imageUrl
     })
+
+    const cachedUser = userCache.get(uid)
+    if (cachedUser) {
+        userCache.set(uid, {
+            ...cachedUser,
+            imageUrl,
+        })
+    }
 }
 
 export async function deleteDbUser(uid: string) {
     const userRef = ref(db, `/inventory/users/${uid}`)
     await remove(userRef)
+    userCache.delete(uid)
 }
 
 export async function replaceInventoryCodes(codes: InventoryCode[]) {

@@ -42,7 +42,7 @@ export default function Page() {
       case 'Live Update':
         return <Liveupdate />
       case 'Submits':
-        return <Submits />
+        return <Submits currentUser={currentUser} />
       case 'Users':
         return <Users currentUser={currentUser} />
       case 'Resources':

@@ -32,7 +32,7 @@ export default function Liveupdate() {
           <h1 className='text-xl font-semibold text-slate-900'>Live Update</h1>
           <p className='text-sm text-slate-500'>Monitor user movement and active tile changes in realtime.</p>
         </div>
-        <div className='inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1.5 text-xs font-medium'>
+        <div className='inline-flex items-center gap-2 rounded-full neu-inset text-slate-700 px-3 py-1.5 text-xs font-medium'>
           <Activity size={14} className='animate-pulse' />
           Live
         </div>
@@ -54,8 +54,8 @@ export default function Liveupdate() {
                 }}
                 className={`px-3 py-2 rounded-2xl border transition flex items-center gap-2 ${
                   user.id === activeUserId
-                    ? 'bg-slate-700 text-white border-slate-700'
-                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                    ? 'bg-[#e7ebf1] text-slate-800 border-slate-200/80 shadow-inner'
+                    : 'bg-[var(--surface-soft)] border-slate-200/80 hover:bg-[#dfe4eb]'
                 }`}
               >
                 <Photo url={user.imageUrl} size={38} />
@@ -85,7 +85,7 @@ export default function Liveupdate() {
             {live.map((item) => {
               const expanded = selectedCode === item.code
               return (
-                <div key={item.id} className='rounded-xl border border-slate-200 bg-white overflow-hidden'>
+                <div key={item.id} className='rounded-xl border border-slate-200/80 bg-[var(--surface-soft)] overflow-hidden'>
                   <button
                     type='button'
                     onClick={() => setSelectedCode(expanded ? null : item.code)}
@@ -97,7 +97,7 @@ export default function Liveupdate() {
                     <div className='border-t border-slate-100 bg-slate-50 px-3 py-2 space-y-1.5'>
                       <HeaderRow muted />
                       {item.items?.map((g) => (
-                        <div key={g.grid} className='rounded-lg border border-slate-200 bg-white px-2.5 py-1.5'>
+                        <div key={g.grid} className='rounded-lg border border-slate-200/80 bg-[var(--surface)] px-2.5 py-1.5'>
                           <LiveItem code={g.grid} history={g.history} qty={g.quantity} />
                         </div>
                       ))}
