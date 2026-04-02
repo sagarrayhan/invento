@@ -67,7 +67,7 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
 
   return (
     <div className='fixed inset-0 z-50 bg-slate-500/25 backdrop-blur-sm flex items-center justify-center p-4'>
-      <form onSubmit={handleSubmit} className='w-full max-w-md rounded-3xl border border-slate-200 bg-[var(--surface)] p-6 shadow-sm'>
+      <form onSubmit={handleSubmit} className='w-full max-w-md rounded-3xl border border-slate-200 bg-(--surface) p-6 shadow-sm'>
         <div className='flex items-start justify-between mb-5'>
           <div>
             <h2 className='text-xl font-semibold text-slate-900'>Create User</h2>

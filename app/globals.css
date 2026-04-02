@@ -32,10 +32,19 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    zoom: 0.95;
     background-image:
       radial-gradient(circle at 14% 12%, rgba(244, 247, 252, 0.3), transparent 30%),
       radial-gradient(circle at 86% 9%, rgba(175, 181, 198, 0.18), transparent 28%),
       radial-gradient(circle at 50% 100%, rgba(158, 165, 182, 0.12), transparent 30%);
+  }
+
+  @supports not (zoom: 1) {
+    body {
+      transform: scale(0.95);
+      transform-origin: top left;
+      width: 105.263%;
+    }
   }
 
   button {

@@ -59,7 +59,7 @@ export default function Users({ currentUser }: { currentUser: AuthUser }) {
     <div className='w-full p-4 md:p-6 space-y-5'>
       <div className='surface p-5 flex items-center justify-between gap-3 anim-enter'>
         <div className='flex items-center gap-3'>
-          <div className='size-10 rounded-xl neu-inset text-slate-700 flex items-center justify-center'>
+          <div className='size-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center'>
             <Users2 size={18} />
           </div>
           <div>
@@ -75,7 +75,7 @@ export default function Users({ currentUser }: { currentUser: AuthUser }) {
         ) : null}
       </div>
 
-      <div className='max-h-[calc(100vh-230px)] overflow-y-auto pr-1 space-y-5 rounded-3xl bg-[var(--surface)] p-1'>
+      <div className='max-h-[calc(100vh-230px)] overflow-y-auto pr-1 space-y-5'>
         {adminUsers.length > 0 ? (
           <div className='grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4'>
             {adminUsers.map((user, index) => (
@@ -107,7 +107,7 @@ export default function Users({ currentUser }: { currentUser: AuthUser }) {
             ))}
           </div>
         ) : null}
-        </div>
+      </div>
 
       {canCreateUsers ? (
         <CreateUserModal
@@ -176,14 +176,11 @@ function UsersCard({
   }
 
   return (
-    <article className={`surface p-5 relative anim-enter hover-lift ${isAdmin ? 'pt-10' : ''}`} style={{ animationDelay: `${delayMs}ms` }}>
+    <article className='surface p-5 relative anim-enter hover-lift' style={{ animationDelay: `${delayMs}ms` }}>
       {isAdmin ? (
-        <p
-          className='absolute right-3 top-3 inline-flex size-14 flex-col items-center justify-center rounded-full neu-inset text-slate-600 text-[9px] leading-none font-semibold'
-          title='Admin'
-        >
-          <ShieldCheck size={13} />
-          <span className='mt-1'>Admin</span>
+        <p className='absolute top-3 right-3 inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-linear-to-r from-amber-50 to-orange-50 text-amber-800 px-2.5 py-1 text-xs font-semibold shadow-sm'>
+          <ShieldCheck size={12} />
+          Admin
         </p>
       ) : null}
       <div className='flex items-start justify-between gap-2'>
@@ -195,7 +192,7 @@ function UsersCard({
                 <button
                   type='button'
                   onClick={uploading ? undefined : () => fileRef.current?.click()}
-                  className='absolute -bottom-1 -right-1 size-7 rounded-full bg-[#eff2f6] border border-slate-200/80 shadow-sm flex items-center justify-center'
+                  className='absolute -bottom-1 -right-1 size-7 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center'
                   title='Change image'
                 >
                   <Camera size={13} />
@@ -207,10 +204,10 @@ function UsersCard({
           <div>
             <h2 className='font-semibold text-slate-800'>{user.name}</h2>
             <p className='text-xs text-slate-500 mt-0.5'>{user.id}</p>
-            <p className='inline-flex mt-2 rounded-full border border-slate-200/80 bg-[#f0f2f6] text-slate-600 px-2.5 py-1 text-xs font-medium shadow-inner'>
+            <p className='inline-flex mt-2 rounded-full bg-sky-50 text-sky-700 px-2.5 py-1 text-xs font-medium'>
               {user.designation}
             </p>
-            {uploading ? <p className='text-xs text-slate-500 mt-1'>Uploading image...</p> : null}
+            {uploading ? <p className='text-xs text-sky-600 mt-1'>Uploading image...</p> : null}
           </div>
         </div>
         {
@@ -218,7 +215,7 @@ function UsersCard({
             type='button'
             onClick={handleDelete}
             disabled={deleting || isCurrentUser || currentUser.designation != "Sr. Manager"}
-            className='size-9 rounded-xl border border-slate-200/80 bg-[#f0f2f6] text-slate-600 hover:bg-[#e8ebf0] flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed'
+            className='size-9 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed'
             title={isCurrentUser ? 'Logged-in user cannot be deleted' : 'Delete user'}
           >
             <Trash2 size={15} />
@@ -232,4 +229,3 @@ function UsersCard({
     </article>
   )
 }
-

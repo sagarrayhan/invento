@@ -2,7 +2,7 @@ import { getAllSubmittedData } from "@/app/data/tiles";
 import { ExcelData, ExcelDataInd, Item, SubmittedItems, Tile, Total } from "@/app/data/types";
 import { getDbUser } from "@/app/data/user";
 import { formatDateDDMMYYYY } from "@/lib/date";
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 
 const toNumber = (value: number | string | undefined | null) => {
   const num = Number(value);
@@ -56,6 +56,116 @@ function applyTableFeatures<T extends object>(
   sheet["!autofilter"] = {
     ref: `${XLSX.utils.encode_col(startCol)}${startRow}:${XLSX.utils.encode_col(endCol)}${endRow}`,
   };
+
+  applyTableBorders(sheet, startCol, endCol, startRow, endRow);
+  applyColumnHeaderBold(sheet, startCol, endCol, startRow);
+}
+
+function applyTableBorders(
+  sheet: XLSX.WorkSheet,
+  startCol: number,
+  endCol: number,
+  startRow: number,
+  endRow: number,
+) {
+  const border = {
+    top: { style: "thin", color: { rgb: "BFC5D1" } },
+    bottom: { style: "thin", color: { rgb: "BFC5D1" } },
+    left: { style: "thin", color: { rgb: "BFC5D1" } },
+    right: { style: "thin", color: { rgb: "BFC5D1" } },
+  };
+  const alignment = {
+    horizontal: "center",
+    vertical: "center",
+    wrapText: true,
+  } as const;
+
+  for (let row = startRow; row <= endRow; row += 1) {
+    for (let col = startCol; col <= endCol; col += 1) {
+      const ref = XLSX.utils.encode_cell({ r: row - 1, c: col });
+      const cell = sheet[ref] || { t: "s", v: "" };
+      (cell as XLSX.CellObject & { s?: unknown }).s = {
+        ...((cell as XLSX.CellObject & { s?: Record<string, unknown> }).s || {}),
+        border,
+        alignment,
+      };
+      sheet[ref] = cell;
+    }
+  }
+}
+
+function applyColumnHeaderBold(
+  sheet: XLSX.WorkSheet,
+  startCol: number,
+  endCol: number,
+  headerRow: number,
+) {
+  for (let col = startCol; col <= endCol; col += 1) {
+    const ref = XLSX.utils.encode_cell({ r: headerRow - 1, c: col });
+    const cell = sheet[ref];
+    if (!cell) continue;
+    (cell as XLSX.CellObject & { s?: unknown }).s = {
+      ...((cell as XLSX.CellObject & { s?: Record<string, unknown> }).s || {}),
+      font: {
+        ...(((cell as XLSX.CellObject & { s?: { font?: Record<string, unknown> } }).s?.font) || {}),
+        bold: true,
+      },
+    };
+  }
+}
+
+function addMergedHeaderRows(
+  sheet: XLSX.WorkSheet,
+  createdBy: string,
+  includeFooterLine: boolean,
+) {
+  const startCol = 1; // B
+  const endCol = 6; // G
+  const startRow = 1; // row 2
+
+  const formattedDate = formatDateDDMMYYYY(new Date());
+  const headerLines = [
+    "Tile Inventory Report",
+    `Created By: ${createdBy}`,
+    ...(includeFooterLine ? ["Developed by Coders Cottage"] : []),
+    `Date: ${formattedDate}`,
+  ];
+
+  // Add header rows as plain text first.
+  XLSX.utils.sheet_add_aoa(
+    sheet,
+    [...headerLines.map((line) => [line]), [""]],
+    { origin: "B2" },
+  );
+
+  // Merge each header line across the same column span for a clean block look.
+  const merges = sheet["!merges"] || [];
+  for (let i = 0; i < headerLines.length; i += 1) {
+    const row = startRow + i;
+    merges.push({
+      s: { r: row, c: startCol },
+      e: { r: row, c: endCol },
+    });
+  }
+  sheet["!merges"] = merges;
+
+  // Bold merged header lines.
+  for (let i = 0; i < headerLines.length; i += 1) {
+    const row = startRow + i;
+    const ref = XLSX.utils.encode_cell({ r: row, c: startCol });
+    const cell = sheet[ref];
+    if (!cell) continue;
+    (cell as XLSX.CellObject & { s?: unknown }).s = {
+      ...((cell as XLSX.CellObject & { s?: Record<string, unknown> }).s || {}),
+      font: {
+        ...(((cell as XLSX.CellObject & { s?: { font?: Record<string, unknown> } }).s?.font) || {}),
+        bold: true,
+      },
+    };
+  }
+
+  // Return first row index (1-based) where table header should start.
+  return headerLines.length + 3;
 }
 
 export async function tilesToExcel(submits: SubmittedItems) {
@@ -86,24 +196,21 @@ export async function tilesToExcel(submits: SubmittedItems) {
     return a.GRID.localeCompare(b.GRID);
   });
 
+  plainData.forEach((row, idx) => {
+    row.INDEX = idx + 1;
+  });
+
   if (plainData.length === 0) return;
 
   const sheet = XLSX.utils.aoa_to_sheet([]);
-  const formattedDate = formatDateDDMMYYYY(new Date());
-
-  XLSX.utils.sheet_add_aoa(
+  const tableStartRow = addMergedHeaderRows(
     sheet,
-    [
-      ["Tile Inventory Report"],
-      [`Created By: ${user?.name || "Unknown"} (${user?.id || creator})`],
-      [`Date: ${formattedDate}`],
-      [],
-    ],
-    { origin: "B2" },
+    `${user?.name || "Unknown"} (${user?.id || creator})`,
+    false,
   );
 
-  XLSX.utils.sheet_add_json(sheet, plainData, { origin: "B7" });
-  applyTableFeatures(sheet, plainData, 1, 7);
+  XLSX.utils.sheet_add_json(sheet, plainData, { origin: `B${tableStartRow}` });
+  applyTableFeatures(sheet, plainData, 1, tableStartRow);
 
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Tiles List");
@@ -216,22 +323,10 @@ export function exportToExcel(
   sheetName = "Merged sheet",
 ) {
   const sheet = XLSX.utils.aoa_to_sheet([]);
-  const formattedDate = formatDateDDMMYYYY(new Date());
+  const tableStartRow = addMergedHeaderRows(sheet, ids.join(", "), true);
 
-  XLSX.utils.sheet_add_aoa(
-    sheet,
-    [
-      ["Tile Inventory Report"],
-      [`Created By: ${ids.join(", ")}`],
-      ["Developed by Coders Cottage"],
-      [`Date: ${formattedDate}`],
-      [],
-    ],
-    { origin: "B2" },
-  );
-
-  XLSX.utils.sheet_add_json(sheet, items, { origin: "B6" });
-  applyTableFeatures(sheet, items, 1, 6);
+  XLSX.utils.sheet_add_json(sheet, items, { origin: `B${tableStartRow}` });
+  applyTableFeatures(sheet, items, 1, tableStartRow);
 
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, sheetName);

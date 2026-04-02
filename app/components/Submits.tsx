@@ -165,7 +165,7 @@ export default function Submits({ currentUser }: { currentUser: AuthUser }) {
       {ids.length === 0 ? (
         <section className='surface p-8 text-center text-slate-500'>No submitted users found.</section>
       ) : (
-        <div className='grid grid-cols-1 xl:grid-cols-2 gap-4'>
+        <div className='grid grid-cols-1 xl:grid-cols-3 gap-4'>
           {ids.map((u) => (
             <SubmitCard key={u} id={u} canDeleteSubmits={canDeleteSubmits} />
           ))}
