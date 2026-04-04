@@ -9,6 +9,16 @@ interface CreateUserModalProps {
   onSubmit: (values: User) => Promise<void>
 }
 
+function toInputDateValue(value: string): string {
+  const normalized = formatDateDDMMYYYY(value)
+  if (!normalized) {
+    return ''
+  }
+
+  const [day, month, year] = normalized.split('-')
+  return `${year}-${month}-${day}`
+}
+
 export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserModalProps) {
   const [form, setForm] = useState<User>({
     id: '',
@@ -97,20 +107,11 @@ export default function CreateUserModal({ open, onClose, onSubmit }: CreateUserM
           </Field>
           <Field icon={<CalendarDays size={16} />}>
             <input
-              type='text'
-              placeholder='dd-mm-yyyy'
-              value={form.joinedAt}
-              onChange={(e) => setForm((prev) => ({ ...prev, joinedAt: e.target.value }))}
-              onBlur={(e) => {
-                const normalized = formatDateDDMMYYYY(e.target.value)
-                if (normalized) {
-                  setForm((prev) => ({ ...prev, joinedAt: normalized }))
-                }
-              }}
+              type='date'
+              value={toInputDateValue(form.joinedAt)}
+              onChange={(e) => setForm((prev) => ({ ...prev, joinedAt: formatDateDDMMYYYY(e.target.value) }))}
               className='input pl-10'
-              inputMode='numeric'
-              pattern='\\d{2}-\\d{2}-\\d{4}'
-              title='Use dd-mm-yyyy format'
+              title='Select a joined date'
             />
           </Field>
           <Field icon={<KeyRound size={16} />}>
