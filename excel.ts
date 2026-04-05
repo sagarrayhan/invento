@@ -4,12 +4,15 @@ import * as XLSX from 'xlsx'
 import { getDbUser } from "./app/data/user";
 import { log } from "console";
 
+interface ExcelDataWithSubmitted extends ExcelData {
+  SUBMITTED: string
+}
 
 
 export async function indivisualExcel(submits: SubmittedItems) {
 
 
-  const plainData: ExcelData[] = []
+  const plainData: ExcelDataWithSubmitted[] = []
 
   const creator = submits.items[0]?.items[0]?.createdBy || "Unknown"
 
@@ -31,7 +34,7 @@ export async function indivisualExcel(submits: SubmittedItems) {
         SIZE : item.size,
         GRID: g.grid,
         HISTORY: g.history,
-        TOTAL : g.quantity,
+        TOTAL : Number(g.quantity || 0),
         SUBMITTED : ""
       })
     })
@@ -135,7 +138,7 @@ export async function downloadTotal(ids: string[]) {
 export async function donwloadDetailed(ids: string[]) {
   const mergedTile = mergeAll(ids)
   let rowIndex = 0
-  const flatData: ExcelData[] = [];
+  const flatData: ExcelDataWithSubmitted[] = [];
 
   (await mergedTile).forEach((tile: Tile) => {
     tile.items.forEach((i: Item) => {
@@ -146,7 +149,7 @@ export async function donwloadDetailed(ids: string[]) {
         SIZE : tile.size,
         GRID: i.grid,
         HISTORY: i.history,
-        TOTAL : i.quantity,
+        TOTAL : Number(i.quantity || 0),
         SUBMITTED: i.createdBy
       })
 
@@ -157,7 +160,7 @@ export async function donwloadDetailed(ids: string[]) {
 
 }
 
-export function exportToExcel(items: Array<ExcelData | Total>, ids: string[]) {
+export function exportToExcel(items: Array<ExcelDataWithSubmitted | Total>, ids: string[]) {
 
   const sheet = XLSX.utils.aoa_to_sheet([])
   // Format date as dd-mm-yyyy
