@@ -8,6 +8,10 @@ function fromDate(date: Date): string {
   return `${pad(date.getDate())}-${pad(date.getMonth() + 1)}-${date.getFullYear()}`
 }
 
+function fromTime(date: Date): string {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 function parseDateInput(value: DateInput): Date | null {
   if (value === null || value === undefined) {
     return null
@@ -74,6 +78,14 @@ export function formatDateDDMMYYYY(value: DateInput): string {
     return ''
   }
   return fromDate(parsed)
+}
+
+export function formatDateTimeDDMMYYYY(value: DateInput): string {
+  const parsed = parseDateInput(value)
+  if (!parsed) {
+    return ''
+  }
+  return `${fromDate(parsed)} ${fromTime(parsed)}`
 }
 
 export function toDateTimestamp(value: DateInput): number {

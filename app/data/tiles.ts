@@ -131,3 +131,8 @@ export async function getAllSubmittedData(users: string[]):Promise<Tile[][]> {
     return allTiles
     
 }
+
+export function clearAllSubmittedData() {
+    const submitRootRef = ref(db, `/inventory/submits`)
+    return remove(submitRootRef)
+}

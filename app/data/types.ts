@@ -44,8 +44,7 @@ export interface ExcelData{
     SIZE: string,
     GRID : string,
     HISTORY : string,
-    TOTAL : string,
-    SUBMITTED: string
+    TOTAL : number
 }
 
 export interface ExcelDataInd{
@@ -54,7 +53,7 @@ export interface ExcelDataInd{
     SIZE: string,
     GRID : string,
     HISTORY : string,
-    TOTAL : string
+    TOTAL : number
 }
 
 export interface Total{

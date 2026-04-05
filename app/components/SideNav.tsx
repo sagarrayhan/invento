@@ -14,7 +14,7 @@ export default function SideNav({ onSelect, selected, currentUser, onLogout }: S
   const Icon = company.logo
 
   return (
-    <aside className='w-67.5 shrink-0 border-r border-slate-200/70 bg-[#e9ecf0]/80 backdrop-blur-xl p-5 md:p-6 grid grid-rows-[auto_1fr_auto] gap-6 min-h-0'>
+    <aside className='w-67.5 shrink-0 h-full overflow-hidden border-r border-slate-200/70 bg-[#e9ecf0]/80 backdrop-blur-xl p-5 md:p-6 grid grid-rows-[auto_1fr_auto] gap-6 min-h-0'>
       <div className='flex items-center gap-3'>
         <div className='size-11 rounded-2xl neu-soft text-slate-700 flex items-center justify-center'>
           <Icon className='size-5' />

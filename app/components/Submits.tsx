@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { Download, HardDriveDownload, Loader2, Send, Trash2 } from 'lucide-react'
-import { getAllSubmittedData, getSubmittedData, removeFromSubmit } from '../data/tiles'
+import { clearAllSubmittedData, getAllSubmittedData, getSubmittedData, removeFromSubmit } from '../data/tiles'
 import { AuthUser, SubmittedItems, User } from '../data/types'
 import Photo from './Photo'
 import { donwloadDetailed, downloadTotal, tilesToExcel } from '@/lib/excel'
 import { getAllUsers, getDbUser, getSubmittedUsers } from '../data/user'
-import { formatDateDDMMYYYY } from '@/lib/date'
+import { formatDateTimeDDMMYYYY } from '@/lib/date'
 
 const designationOrder = [
   'Sr. Manager',
@@ -44,6 +44,7 @@ export default function Submits({ currentUser }: { currentUser: AuthUser }) {
   const [loadingSummary, setLoadingSummary] = useState(false)
   const [downloadingDetailed, setDownloadingDetailed] = useState(false)
   const [downloadingTotal, setDownloadingTotal] = useState(false)
+  const [cleaningAll, setCleaningAll] = useState(false)
   const [adminId, setAdminId] = useState('')
   const canDeleteSubmits = Boolean(adminId) && currentUser.id === adminId
 
@@ -123,6 +124,18 @@ export default function Submits({ currentUser }: { currentUser: AuthUser }) {
     }
   }
 
+  const handleCleanAllSubmits = async () => {
+    if (!canDeleteSubmits || cleaningAll) return
+    const ok = window.confirm('Are you sure you want to remove all submitted data? This action cannot be undone.')
+    if (!ok) return
+    setCleaningAll(true)
+    try {
+      await clearAllSubmittedData()
+    } finally {
+      setCleaningAll(false)
+    }
+  }
+
   return (
     <div className='w-full p-4 md:p-6 space-y-5'>
       <section className='surface p-5 flex flex-wrap items-center justify-between gap-3'>
@@ -159,6 +172,18 @@ export default function Submits({ currentUser }: { currentUser: AuthUser }) {
             {downloadingTotal ? <Loader2 size={14} className='animate-spin' /> : <Download size={14} />}
             {loadingSummary ? 'Preparing...' : downloadingTotal ? 'Downloading...' : 'Download'}
           </button>
+          {canDeleteSubmits ? (
+            <button
+              type='button'
+              onClick={handleCleanAllSubmits}
+              className='btn-secondary text-rose-600 border-rose-200 hover:bg-rose-50'
+              disabled={cleaningAll || loadingSummary || !hasSubmittedRows}
+              title='Remove all submitted data'
+            >
+              {cleaningAll ? <Loader2 size={14} className='animate-spin' /> : <Trash2 size={14} />}
+              {cleaningAll ? 'Cleaning...' : 'Clean'}
+            </button>
+          ) : null}
         </div>
       </section>
 
@@ -179,6 +204,7 @@ function SubmitCard({ id, canDeleteSubmits }: { id: string; canDeleteSubmits: bo
   const [items, setItems] = useState<SubmittedItems[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [downloadingKey, setDownloadingKey] = useState<string | null>(null)
+  const [downloadingAll, setDownloadingAll] = useState(false)
 
   useEffect(() => {
     const unsubs = getSubmittedData(id, setItems)
@@ -210,14 +236,35 @@ function SubmitCard({ id, canDeleteSubmits }: { id: string; canDeleteSubmits: bo
     }
   }
 
+  const handleDownloadAllForUser = async () => {
+    if (downloadingAll || items.length === 0) return
+    setDownloadingAll(true)
+    try {
+      await donwloadDetailed([id])
+    } finally {
+      setDownloadingAll(false)
+    }
+  }
+
   return (
     <article className='surface p-5'>
-      <div className='flex items-center gap-3 mb-5'>
-        <Photo url={user?.imageUrl || ''} size={46} />
-        <div>
-          <h2 className='text-base font-semibold text-slate-800'>{user?.name || 'Unknown User'}</h2>
-          <p className='text-xs text-slate-500'>{user?.id || id}</p>
+      <div className='flex items-start justify-between gap-3 mb-5'>
+        <div className='flex items-center gap-3'>
+          <Photo url={user?.imageUrl || ''} size={46} />
+          <div>
+            <h2 className='text-base font-semibold text-slate-800'>{user?.name || 'Unknown User'}</h2>
+            <p className='text-xs text-slate-500'>{user?.id || id}</p>
+          </div>
         </div>
+        <button
+          type='button'
+          className='size-9 rounded-lg border border-slate-200/80 bg-[#f0f2f6] text-slate-600 hover:bg-[#e8ebf0] flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed'
+          onClick={handleDownloadAllForUser}
+          title='Download all submitted items for this user'
+          disabled={items.length === 0 || downloadingAll}
+        >
+          {downloadingAll ? <Loader2 size={16} className='animate-spin' /> : <Download size={16} />}
+        </button>
       </div>
 
       {items.length === 0 ? (
@@ -228,14 +275,25 @@ function SubmitCard({ id, canDeleteSubmits }: { id: string; canDeleteSubmits: bo
             const submittedAt = item.items[0]?.createdAt;
             let submittedText = '';
             if (submittedAt) {
-              submittedText = formatDateDDMMYYYY(submittedAt);
+              submittedText = formatDateTimeDDMMYYYY(submittedAt);
             }
             return (
               <div key={item.key} className='rounded-xl neu-inset p-3.5 flex flex-col gap-2'>
                 <div className='flex items-center justify-between'>
                   <h3 className='text-sm font-semibold text-slate-800'>List {index + 1}</h3>
                   {submittedText && (
-                    <span className='text-xs text-slate-400 whitespace-nowrap'>Submitted: {submittedText}</span>
+                    <span className='text-xs text-slate-400 text-right leading-tight'>
+                      {(() => {
+                        const [datePart, timePart] = submittedText.split(' ')
+                        return (
+                          <>
+                            Date: {datePart}
+                            <br />
+                            {timePart || ''}
+                          </>
+                        )
+                      })()}
+                    </span>
                   )}
                 </div>
                 <div className='flex items-center justify-between'>

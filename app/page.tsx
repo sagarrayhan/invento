@@ -66,14 +66,14 @@ export default function Page() {
 
   return (
     <div className='app-shell'>
-      <div className='surface flex w-full min-h-[calc(100vh-2rem)] overflow-hidden'>
+      <div className='surface flex w-full h-[calc(100vh-0.25rem)] md:h-[calc(100vh-0.5rem)] overflow-hidden'>
       <SideNav
         onSelect={setSelected}
         selected={selected}
         currentUser={currentUser}
         onLogout={handleLogout}
       />
-      <div className='flex-1 p-3 md:p-4 overflow-auto'>{renderContent()}</div>
+      <div className='flex-1 min-w-0 p-3 md:p-4 overflow-auto'>{renderContent()}</div>
       </div>
     </div>
   )

@@ -186,7 +186,7 @@ export async function tilesToExcel(submits: SubmittedItems) {
         SIZE: tile.size,
         GRID: item.grid,
         HISTORY: item.history,
-        TOTAL: item.quantity,
+        TOTAL: toNumber(item.quantity),
       });
     });
   });
@@ -309,8 +309,7 @@ export async function donwloadDetailed(ids: string[]) {
             SIZE: tile.size,
             GRID: item.grid,
             HISTORY: item.history,
-            TOTAL: item.quantity,
-            SUBMITTED: item.createdBy,
+            TOTAL: toNumber(item.quantity),
           });
         });
     });
